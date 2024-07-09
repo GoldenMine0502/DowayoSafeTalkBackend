@@ -70,7 +70,7 @@ class DebertaClassificationModel:
         model.config.max_position_embeddings = 1024
         del model.config.id2label[1]
 
-        self.model = DebertaForSequenceClassification.from_pretrained("microsoft/deberta-base", config=model.config).to(device)
+        self.model = DebertaForSequenceClassification(model.config).to(device)
 
         if checkpoint is not None:
             self.model = torch.load(checkpoint).to(device)
