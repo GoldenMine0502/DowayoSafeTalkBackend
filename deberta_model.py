@@ -67,9 +67,10 @@ class DebertaClassificationModel:
         # model.config
         self.tokenizer = AutoTokenizer.from_pretrained("microsoft/deberta-base")
         model = DebertaForSequenceClassification.from_pretrained("microsoft/deberta-base").to(device)
+        model.config.max_position_embeddings = 1024
+        del model.config.id2label[1]
 
-        num_labels = len(model.config.id2label)
-        self.model = DebertaForSequenceClassification.from_pretrained("microsoft/deberta-base", num_labels=num_labels).to(device)
+        self.model = DebertaForSequenceClassification.from_pretrained("microsoft/deberta-base", config=model.config).to(device)
 
         if checkpoint is not None:
             self.model = torch.load(checkpoint).to(device)
