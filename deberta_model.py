@@ -58,7 +58,7 @@ class TextLoader:
 
 
 class DebertaClassificationModel:
-    def __init__(self, trainloader, validationloader, testloader):
+    def __init__(self, trainloader, validationloader, testloader, checkpoint=None):
         self.trainloader = trainloader
         self.validationloader = validationloader
         self.testloader = testloader
@@ -69,6 +69,9 @@ class DebertaClassificationModel:
 
         num_labels = len(model.config.id2label)
         self.model = DebertaForSequenceClassification.from_pretrained("microsoft/deberta-base", num_labels=num_labels)
+
+        if checkpoint is not None:
+            self.model = torch.load(checkpoint)
 
     def train_one(self, text, label):
         text = text.replace("/", " ")
@@ -130,3 +133,5 @@ if __name__ == "__main__":
 
     trainer = DebertaClassificationModel(l1, l2, l3)
     trainer.process(epoch=10)
+
+    torch.save(trainer.model, 'deberta.pt')
