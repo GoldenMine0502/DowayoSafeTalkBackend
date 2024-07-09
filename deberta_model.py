@@ -151,7 +151,7 @@ class DebertaClassificationModel:
 
 # 학습 안시키면 정확도 51%
 if __name__ == "__main__":
-    batch_size = 4
+    batch_size = 2
     # l1 = TextLoader(["./dataset/train.txt"])
     # l2 = TextLoader(["./dataset/validation.txt"])
     # testloader = TextLoader(["./dataset/validation.txt"]
