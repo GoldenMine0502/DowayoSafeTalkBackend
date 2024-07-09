@@ -53,6 +53,7 @@ class TextLoader:
                 for line in file:
                     line = line.strip()
                     split = line.split('|')
+                    # print(split)
                     self.data.append((split[0], int(split[1])))
 
 
@@ -70,6 +71,7 @@ class DebertaClassificationModel:
         self.model = DebertaForSequenceClassification.from_pretrained("microsoft/deberta-base", num_labels=num_labels)
 
     def train_one(self, text, label):
+        text = text.replace("/", " ")
         inputs = self.tokenizer(text, return_tensors="pt")
 
         # To train a model on `num_labels` classes, you can pass `num_labels=num_labels` to `.from_pretrained(...)`
@@ -79,6 +81,7 @@ class DebertaClassificationModel:
         return loss.item()
 
     def vali_one(self, text, label):
+        text = text.replace("/", " ")
         inputs = self.tokenizer(text, return_tensors="pt")
 
         with torch.no_grad():
@@ -118,10 +121,12 @@ class DebertaClassificationModel:
 
 
 if __name__ == "__main__":
-    l1 = TextLoader(["./datasets/train.txt"])
-    l2 = TextLoader(["./datasets/validation.txt"])
-    # testloader = TextLoader(["./datasets/validation.txt"]
+    l1 = TextLoader(["./dataset/train.txt"])
+    l2 = TextLoader(["./dataset/validation.txt"])
+    # testloader = TextLoader(["./dataset/validation.txt"]
     l3 = None  # TODO
+
+    print('text loader is loaded')
 
     trainer = DebertaClassificationModel(l1, l2, l3)
     trainer.process(epoch=10)

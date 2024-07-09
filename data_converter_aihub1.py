@@ -14,7 +14,7 @@ class DataConverterAihub1:
         # 개수 확인결과 622545개
         all_files = [f for f in Path(self.path).rglob('*.txt') if f.is_file()]
 
-        result_file = 'datasets/korean_aihub1_result.txt'
+        result_file = 'dataset/korean_aihub1_result.txt'
 
         os = open(result_file, 'wt', encoding='utf-8')
 

@@ -9,9 +9,11 @@ class DataConverter:
 
 
 # 데이터셋은 결국 text|value로 회귀한다.
+# C150789에 잘못된 데이터가 있어 수정함
 class DataConverterSelectStar:
     def __init__(self):
-        self.path = "dataset/Selectstar_Tunip_HUMANE Lab_opendata"
+        self.path = "dataset/data/Selectstar_Tunip_HUMANE Lab_opendata"
+        self.result_path = "dataset/data/korean_selectstar_result.txt"
         pass
 
     def convert_all(self):
@@ -23,6 +25,7 @@ class DataConverterSelectStar:
 
         results = []
 
+        count = 0
         zeros = 0
 
         for file_path in tqdm(all_files, ncols=50):
@@ -34,12 +37,18 @@ class DataConverterSelectStar:
                 # 독점이 되면 기업이 공산국가처럼 독재하는건데",
                 # "대상하이라이트": "독점은 당연히 막아야지. 이건 사장경제는 경쟁으로 가야 정상순환되는데 독점이 되면 기업이 ''공산국가'''처럼 독재하는건데",
                 # "정치성향Y/N": "Y", "혐오 클래스": "Y", "특정 집단": "N", "그 외": "N"}
-                file_text = file.read().strip().replace("\n", "").replace("'", "").replace('\'', '')
+                raw_text = file.read().strip()
+                file_text = raw_text.replace("\n", "").replace("'", "").replace('\'', '').replace("|", "")
                 data = json.loads(file_text)
 
-                text = data["문장"].strip()
+                text = data["문장"].strip().replace('\n', '')
+
+                # 데이터셋이 완전하지 않아 문장은 비어있고 하이라이트만 차있는 경우 있어서 이경우 한 번 보상해줌 데이터 자체를 바꾸긴 귀찮음
+                if len(text) < 3:
+                    text = data["대상하이라이트"].strip().replace('\n', '')
 
                 if len(text) < 3:
+                    print(file_path, raw_text)
                     continue
 
                 bad_content_sum = sum(map(lambda x: data[x], bad_content_keywords))
@@ -47,15 +56,16 @@ class DataConverterSelectStar:
                 score = 1 if bad_content_sum > 0 else 0
                 results.append(f"{text}|{score}")
 
+                count += 1
+
                 if score == 0:
                     zeros += 1
 
-        path = "dataset/selectstar_result.txt"
-
-        with open(path, "w") as file:
+        with open(self.result_path, "w") as file:
             file.write("\n".join(results))
 
-        print('zeros:', zeros)
+        print('zeros:', zeros, count)
+
 
 if __name__ == "__main__":
     converter = DataConverterSelectStar()
