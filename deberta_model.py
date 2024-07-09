@@ -144,7 +144,7 @@ class DebertaClassificationModel:
 
     def process(self, epoch=10):
         for i in range(1, epoch + 1):
-            print("epoch {}:".format(i))
+            print("epoch {}/{}:".format(i, epoch))
             self.train()
             self.validation()
 
