@@ -71,7 +71,8 @@ class DebertaClassificationModel:
         # del model.config.id2label[1]
 
         # self.model = DebertaForSequenceClassification(model.config).to(device)
-        self.model = DebertaForSequenceClassification.from_pretrained("microsoft/deberta-base", num_labels=1).to(device)
+        num_labels = len(model.config.id2label)
+        self.model = DebertaForSequenceClassification.from_pretrained("microsoft/deberta-base", num_labels=num_labels, force_download=True).to(device)
 
         if checkpoint is not None:
             self.model = torch.load(checkpoint).to(device)
