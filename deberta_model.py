@@ -65,7 +65,7 @@ class DebertaClassificationModel:
         self.testloader = testloader
 
         # model.config
-        self.tokenizer = AutoTokenizer.from_pretrained("microsoft/deberta-base").to(device)
+        self.tokenizer = AutoTokenizer.from_pretrained("microsoft/deberta-base")
         model = DebertaForSequenceClassification.from_pretrained("microsoft/deberta-base").to(device)
 
         num_labels = len(model.config.id2label)
