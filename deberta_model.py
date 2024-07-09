@@ -45,17 +45,23 @@ from transformers import AutoTokenizer, DebertaForSequenceClassification
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
+
 class TextLoader:
     def __init__(self, paths):
+        self.tokenizer = AutoTokenizer.from_pretrained("microsoft/deberta-base")
         self.data = []
 
         for path in paths:
             with open(path, 'rt') as file:
-                for line in file:
+                for line in tqdm(file, ncols=50):
                     line = line.strip()
                     split = line.split('|')
+
+                    text = split[0].replace("/", " ")
+                    inputs = self.tokenizer(text, return_tensors="pt").to(device)
+
                     # print(split)
-                    self.data.append((split[0], int(split[1])))
+                    self.data.append((inputs, int(split[1])))
 
 
 class DebertaClassificationModel:
@@ -77,26 +83,18 @@ class DebertaClassificationModel:
         if checkpoint is not None:
             self.model = torch.load(checkpoint).to(device)
 
-    def train_one(self, text, label):
-        text = text.replace("/", " ")
-        inputs = self.tokenizer(text, return_tensors="pt").to(device)
-
-        # To train a model on `num_labels` classes, you can pass `num_labels=num_labels` to `.from_pretrained(...)`
-        # labels = torch.tensor([label], dtype=torch.int32).to(device)
+    def train_one(self, inputs, label):
         labels = torch.tensor([label]).to(device)
         loss = self.model(**inputs, labels=labels).loss
 
         return loss.item()
 
-    def vali_one(self, text, label):
-        text = text.replace("/", " ")
-        inputs = self.tokenizer(text, return_tensors="pt").to(device)
-
+    def vali_one(self, inputs, label):
         with torch.no_grad():
             logits = self.model(**inputs).logits
 
         predicted_class_id = logits.argmax().item()
-        print(predicted_class_id)
+        # print(logits, predicted_class_id, label)
 
         return predicted_class_id == label
 
@@ -111,7 +109,7 @@ class DebertaClassificationModel:
     def validation(self):
         count = 0
         correct = 0
-        for text, label in tqdm(self.validationloader.data, ncols=50):
+        for text, label in self.validationloader.data:
             state = self.vali_one(text, label)
 
             count += 1
@@ -120,14 +118,14 @@ class DebertaClassificationModel:
 
         print("validation accuracy: {}%".format(round(correct / count * 100, 2)))
 
-
     def process(self, epoch=10):
         for i in range(1, epoch + 1):
             print("epoch {}:".format(i))
-            self.train()
+            # self.train()
             self.validation()
 
 
+# 학습 안시키면 정확도 51%
 if __name__ == "__main__":
     l1 = TextLoader(["./dataset/train.txt"])
     l2 = TextLoader(["./dataset/validation.txt"])
@@ -137,6 +135,6 @@ if __name__ == "__main__":
     print('text loader is loaded')
 
     trainer = DebertaClassificationModel(l1, l2, l3)
-    trainer.process(epoch=10)
+    trainer.process(epoch=1)
 
     torch.save(trainer.model, 'deberta.pt')
