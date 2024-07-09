@@ -1,5 +1,3 @@
-
-
 # from transformers import DebertaConfig, DebertaModel
 # from transformers import DebertaTokenizer
 #
@@ -41,27 +39,44 @@
 
 import torch
 from datasets import tqdm
+from torch.utils.data import Dataset, DataLoader
 from transformers import AutoTokenizer, DebertaForSequenceClassification
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
-class TextLoader:
+def collate_fn(batch):
+    data = []
+    labels = []
+
+    for text, label in batch:
+        data.append(text)
+        labels.append(label)
+
+    # print(len(data), len(labels))
+    # print(labels)
+
+    return data, torch.tensor(labels)
+
+
+class TextLoader(Dataset):
     def __init__(self, paths):
-        self.tokenizer = AutoTokenizer.from_pretrained("microsoft/deberta-base")
         self.data = []
 
         for path in paths:
             with open(path, 'rt') as file:
                 for line in tqdm(file, ncols=50):
                     line = line.strip()
-                    split = line.split('|')
+                    line = line.replace("/", " ")
 
-                    text = split[0].replace("/", " ")
-                    inputs = self.tokenizer(text, return_tensors="pt").to(device)
+                    self.data.append(line.split("|"))
 
-                    # print(split)
-                    self.data.append((inputs, int(split[1])))
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        item = self.data[idx]
+        return item[0], int(item[1])
 
 
 class DebertaClassificationModel:
@@ -78,59 +93,88 @@ class DebertaClassificationModel:
 
         # self.model = DebertaForSequenceClassification(model.config).to(device)
         num_labels = len(model.config.id2label)
-        self.model = DebertaForSequenceClassification.from_pretrained("microsoft/deberta-base", num_labels=num_labels).to(device)
+        self.model = DebertaForSequenceClassification.from_pretrained("microsoft/deberta-base",
+                                                                      num_labels=num_labels).to(device)
 
         if checkpoint is not None:
             self.model = torch.load(checkpoint).to(device)
 
-    def train_one(self, inputs, label):
-        labels = torch.tensor([label]).to(device)
+    def train_one(self, inputs, labels):
+        inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(device)
+        labels = labels.to(device)
+
         loss = self.model(**inputs, labels=labels).loss
 
         return loss.item()
 
-    def vali_one(self, inputs, label):
+    def vali_one(self, inputs, labels):
+        inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(device)
         with torch.no_grad():
             logits = self.model(**inputs).logits
 
-        predicted_class_id = logits.argmax().item()
-        # print(logits, predicted_class_id, label)
+        predicted_class_id = logits.argmax(dim=1)
+        # print(logits, predicted_class_id, labels)
+        # print(logits.shape, labels.shape)
 
-        return predicted_class_id == label
+        correct = 0
+        for predict, ans in zip(predicted_class_id, labels):
+            if predict == ans:
+                correct += 1
+
+        return correct, len(labels)
 
     def train(self):
         losses = []
-        for text, label in tqdm(self.trainloader.data, ncols=50):
+        for text, label in tqdm(self.trainloader, ncols=50):
             loss = self.train_one(text, label)
             losses.append(loss)
 
         print("loss: {}".format(sum(losses) / len(losses)))
 
     def validation(self):
-        count = 0
-        correct = 0
-        for text, label in self.validationloader.data:
-            state = self.vali_one(text, label)
+        counts = 0
+        corrects = 0
+        for text, label in tqdm(self.validationloader, ncols=50):
+            correct, count = self.vali_one(text, label)
 
-            count += 1
-            if state:
-                correct += 1
+            corrects += correct
+            counts += count
 
-        print("validation accuracy: {}%".format(round(correct / count * 100, 2)))
+        print("validation accuracy: {}%".format(round(corrects / counts * 100, 2)))
 
     def process(self, epoch=10):
         for i in range(1, epoch + 1):
             print("epoch {}:".format(i))
-            # self.train()
+            self.train()
             self.validation()
 
 
 # 학습 안시키면 정확도 51%
 if __name__ == "__main__":
-    l1 = TextLoader(["./dataset/train.txt"])
-    l2 = TextLoader(["./dataset/validation.txt"])
+    batch_size = 64
+    # l1 = TextLoader(["./dataset/train.txt"])
+    # l2 = TextLoader(["./dataset/validation.txt"])
     # testloader = TextLoader(["./dataset/validation.txt"]
-    l3 = None  # TODO
+    # l3 = None  # TODO
+    l1 = DataLoader(dataset=TextLoader(["./dataset/train.txt"]),
+                    batch_size=batch_size,
+                    shuffle=True,
+                    num_workers=1,
+                    collate_fn=collate_fn,
+                    pin_memory=True,
+                    drop_last=False,
+                    sampler=None)
+
+    l2 = DataLoader(dataset=TextLoader(["./dataset/validation.txt"]),
+                    batch_size=batch_size,
+                    shuffle=True,
+                    num_workers=1,
+                    collate_fn=collate_fn,
+                    pin_memory=True,
+                    drop_last=False,
+                    sampler=None)
+
+    l3 = None
 
     print('text loader is loaded')
 
