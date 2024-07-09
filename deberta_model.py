@@ -80,7 +80,7 @@ class DebertaClassificationModel:
         inputs = self.tokenizer(text, return_tensors="pt").to(device)
 
         # To train a model on `num_labels` classes, you can pass `num_labels=num_labels` to `.from_pretrained(...)`
-        labels = torch.tensor([label]).to(device)
+        labels = torch.tensor([label], dtype=torch.int32).to(device)
         loss = self.model(**inputs, labels=labels).loss
 
         return loss.item()
