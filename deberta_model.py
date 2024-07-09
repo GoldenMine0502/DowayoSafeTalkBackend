@@ -43,6 +43,7 @@ import torch
 from datasets import tqdm
 from transformers import AutoTokenizer, DebertaForSequenceClassification
 
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 class TextLoader:
     def __init__(self, paths):
@@ -64,28 +65,28 @@ class DebertaClassificationModel:
         self.testloader = testloader
 
         # model.config
-        self.tokenizer = AutoTokenizer.from_pretrained("microsoft/deberta-base")
-        model = DebertaForSequenceClassification.from_pretrained("microsoft/deberta-base")
+        self.tokenizer = AutoTokenizer.from_pretrained("microsoft/deberta-base").to(device)
+        model = DebertaForSequenceClassification.from_pretrained("microsoft/deberta-base").to(device)
 
         num_labels = len(model.config.id2label)
-        self.model = DebertaForSequenceClassification.from_pretrained("microsoft/deberta-base", num_labels=num_labels)
+        self.model = DebertaForSequenceClassification.from_pretrained("microsoft/deberta-base", num_labels=num_labels).to(device)
 
         if checkpoint is not None:
-            self.model = torch.load(checkpoint)
+            self.model = torch.load(checkpoint).to(device)
 
     def train_one(self, text, label):
         text = text.replace("/", " ")
-        inputs = self.tokenizer(text, return_tensors="pt")
+        inputs = self.tokenizer(text, return_tensors="pt").to(device)
 
         # To train a model on `num_labels` classes, you can pass `num_labels=num_labels` to `.from_pretrained(...)`
-        labels = torch.tensor([label])
+        labels = torch.tensor([label]).to(device)
         loss = self.model(**inputs, labels=labels).loss
 
         return loss.item()
 
     def vali_one(self, text, label):
         text = text.replace("/", " ")
-        inputs = self.tokenizer(text, return_tensors="pt")
+        inputs = self.tokenizer(text, return_tensors="pt").to(device)
 
         with torch.no_grad():
             logits = self.model(**inputs).logits
