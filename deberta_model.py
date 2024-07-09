@@ -87,14 +87,14 @@ class DebertaClassificationModel:
 
         # model.config
         self.tokenizer = AutoTokenizer.from_pretrained("microsoft/deberta-base")
-        model = DebertaForSequenceClassification.from_pretrained("microsoft/deberta-base").to(device)
+        # model = DebertaForSequenceClassification.from_pretrained("microsoft/deberta-base").to(device)
         # model.config.max_position_embeddings = 1024
         # del model.config.id2label[1]
 
         # self.model = DebertaForSequenceClassification(model.config).to(device)
-        num_labels = len(model.config.id2label)
+        # num_labels = len(model.config.id2label)
         self.model = DebertaForSequenceClassification.from_pretrained("microsoft/deberta-base",
-                                                                      num_labels=num_labels).to(device)
+                                                                      num_labels=2).to(device)
 
         if checkpoint is not None:
             self.model = torch.load(checkpoint).to(device)
@@ -148,6 +148,8 @@ class DebertaClassificationModel:
             self.train()
             self.validation()
 
+            torch.save(self.model, f'deberta_{i}.pt')
+
 
 # 학습 안시키면 정확도 51%
 if __name__ == "__main__":
@@ -179,6 +181,4 @@ if __name__ == "__main__":
     print('text loader is loaded')
 
     trainer = DebertaClassificationModel(l1, l2, l3)
-    trainer.process(epoch=1)
-
-    torch.save(trainer.model, 'deberta.pt')
+    trainer.process(epoch=20)
