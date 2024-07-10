@@ -40,7 +40,7 @@
 import torch
 from datasets import tqdm
 from torch.utils.data import Dataset, DataLoader
-from transformers import AutoTokenizer, DebertaForSequenceClassification
+from transformers import AutoTokenizer, DebertaForSequenceClassification, DebertaConfig
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -87,14 +87,16 @@ class DebertaClassificationModel:
 
         # model.config
         self.tokenizer = AutoTokenizer.from_pretrained("microsoft/deberta-base")
-        # model = DebertaForSequenceClassification.from_pretrained("microsoft/deberta-base").to(device)
+        model = DebertaForSequenceClassification.from_pretrained("microsoft/deberta-base")
         # model.config.max_position_embeddings = 1024
         # del model.config.id2label[1]
 
         # self.model = DebertaForSequenceClassification(model.config).to(device)
         # num_labels = len(model.config.id2label)
-        self.model = DebertaForSequenceClassification.from_pretrained("microsoft/deberta-base",
-                                                                      num_labels=2).to(device)
+
+        model.config.num_labels = 2
+        # model.config.max_position_embeddings = 768
+        self.model = DebertaForSequenceClassification(model.config).to(device)
 
         if checkpoint is not None:
             self.model = torch.load(checkpoint).to(device)
@@ -145,7 +147,7 @@ class DebertaClassificationModel:
     def process(self, epoch=10):
         for i in range(1, epoch + 1):
             print("epoch {}/{}:".format(i, epoch))
-            self.train()
+            # self.train()
             self.validation()
 
             torch.save(self.model, f'deberta_{i}.pt')
