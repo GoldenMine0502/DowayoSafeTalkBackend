@@ -184,3 +184,6 @@ if __name__ == "__main__":
 
     trainer = DebertaClassificationModel(l1, l2, l3)
     trainer.process(epoch=20)
+
+# pip3 freeze > requirements.txt
+# pip install -r requirements.txt

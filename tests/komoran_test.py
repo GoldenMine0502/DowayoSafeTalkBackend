@@ -9,7 +9,7 @@ from PyKomoran import *
 komoran = Komoran("EXP")
 
 # 분석할 문장 준비
-str_to_analyze = "① 대한민국은 민주공화국이다. ② 대한민국의 주권은 국민에게 있고, 모든 권력은 국민으로부터 나온다."
+str_to_analyze = "① 대한민국은 민주공화국이다. ② 대한민국의 주권은 국민에게 있고, 모든 권력은 국민으로부터 나와."
 
 # get_nouns(): 입력 문장에서 명사만 추출합니다.
 print(komoran.get_nouns(str_to_analyze))

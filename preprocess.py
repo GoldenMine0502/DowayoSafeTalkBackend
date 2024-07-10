@@ -1,7 +1,10 @@
-import time
 
+from pykospacing import Spacing
 from PyKomoran import *
 from datasets import tqdm
+
+spacing = Spacing()
+print(spacing('아 몬 소리야 그건 또'))
 
 
 class PreProcessKomoran:
@@ -14,10 +17,46 @@ class PreProcessKomoran:
         ]
 
         self.result_path = 'dataset/train.txt'
+        # self.punct = "/-'?!.,#$%\'()*+-/:;<=>@[\\]^_`{|}~" + '""“”’' + '∞θ÷α•à−β∅³π‘₹´°£€\\×™√²—–&'
+        # self.punct_mapping = {"‘": "'", "₹": "e", "´": "'", "°": "", "€": "e", "™": "tm", "√": " sqrt ", "×": "x", "²": "2",
+        #                  "—": "-", "–": "-", "’": "'", "_": "-", "`": "'", '”': '"', '“': '"', "£": "e",
+        #                  '∞': 'infinity', 'θ': 'theta', '÷': '/', 'α': 'alpha', '•': '.', 'à': 'a', '−': '-',
+        #                  'β': 'beta', '∅': '', '³': '3', 'π': 'pi', }
+
+    # def clean(self, text, punct, mapping):
+    #     for p in mapping:
+    #         text = text.replace(p, mapping[p])
+    #
+    #     for p in punct:
+    #         text = text.replace(p, f' {p} ')
+    #
+    #     specials = {'\u200b': ' ', '…': ' ... ', '\ufeff': '', 'करना': '', 'है': ''}
+    #     for s in specials:
+    #         text = text.replace(s, specials[s])
+    #
+    #     return text.strip()
 
     def clean_text(self, text):
+        # pattern = '([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)'  # E-mail제거
+        # text = re.sub(pattern=pattern, repl='', string=text)
+        # pattern = '(http|ftp|https)://(?:[-\w.]|(?:%[\da-fA-F]{2}))+'  # URL제거
+        # text = re.sub(pattern=pattern, repl='', string=text)
+        # pattern = '([ㄱ-ㅎㅏ-ㅣ]+)'  # 한글 자음, 모음 제거
+        # text = re.sub(pattern=pattern, repl='', string=text)
+        # pattern = '<[^>]*>'  # HTML 태그 제거
+        # text = re.sub(pattern=pattern, repl='', string=text)
+        # pattern = '[^\s\n]'  # 특수기호제거
+        # text = re.sub(pattern=pattern, repl='', string=text)
+        # text = re.sub('[-=+,#/\?:^$.@*\"※~&%ㆍ!』\\‘|\(\)\[\]\<\>`\'…》]', '', string=text)
+        # text = re.sub('\n', '.', string=text)
+
+        # print(text)
+        text = spacing(text)
+        # text = repeat_normalize(text, num_repeats=2)
+
+
         # 즵 즺 즫 즥 즷 즴 즨 즹 즬 즿 즼 즽 즻 즻 즾
-        return (text.replace("#@이름#", "#")
+        text = (text.replace("#@이름#", "#")
                     .replace(" # ", "#")
                     .replace("##", "#")
                     .replace('즺', '짖')
@@ -37,6 +76,8 @@ class PreProcessKomoran:
                     .replace('즤', '지')
                 )
 
+        return text
+
 
     def get_tokens(self):
         all_texts = []
@@ -54,14 +95,23 @@ class PreProcessKomoran:
                 if len(split) == 1:
                     return '#' not in text
 
-                return split[1] != 'SW'
+                word, wtype = split
+
+                if wtype == 'NNP' or wtype == 'NNG':
+                    return True
+
+                if wtype == 'VV' or wtype == 'VA':
+                    return True
+
+                return False
+
             # print(text)
-            text = self.clean_text(text)
             text, label = text.split("|")
+            text = self.clean_text(text)
 
             res = self.komoran.get_plain_text(text).split(' ')
 
-            res = list(filter(filter_sw, res))  # 특수문자 필터링
+            res = list(filter(filter_sw, res))  # 필터링
             res = list(map(lambda x: x.split('/')[0], res))  # 대한민국/NNP 같은 단어가 있으면 슬래시 뒤 문자 떼버림
             # print(text, res, len(res))
             results.append((res, label))
