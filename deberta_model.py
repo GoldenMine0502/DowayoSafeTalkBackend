@@ -147,7 +147,7 @@ class DebertaClassificationModel:
     def process(self, epoch=10):
         for i in range(1, epoch + 1):
             print("epoch {}/{}:".format(i, epoch))
-            # self.train()
+            self.train()
             self.validation()
 
             torch.save(self.model, f'deberta_{i}.pt')
