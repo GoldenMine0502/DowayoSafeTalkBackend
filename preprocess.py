@@ -4,13 +4,13 @@ from PyKomoran import *
 from datasets import tqdm
 
 spacing = Spacing()
-print(spacing('아 몬 소리야 그건 또'))
+print('running test:', spacing('아 몬소리야 그건 또'))
 
 
 class PreProcessKomoran:
     def __init__(self):
         # print(__version__)
-        self.komoran = Komoran("STABLE")  # OR EXP
+        self.komoran = Komoran("EXP")  # OR EXP
         self.datasets = [
             './dataset/data/korean_aihub1_result.txt',
             './dataset/data/korean_selectstar_result.txt',
@@ -49,6 +49,8 @@ class PreProcessKomoran:
         # text = re.sub(pattern=pattern, repl='', string=text)
         # text = re.sub('[-=+,#/\?:^$.@*\"※~&%ㆍ!』\\‘|\(\)\[\]\<\>`\'…》]', '', string=text)
         # text = re.sub('\n', '.', string=text)
+
+        text = text.replace('/', '')
 
         # print(text)
         text = spacing(text)
@@ -95,7 +97,12 @@ class PreProcessKomoran:
                 if len(split) == 1:
                     return '#' not in text
 
-                word, wtype = split
+                if len(split) > 2:
+                    word = '/'.join(split[:-1])
+                    wtype = split[-1]
+                else:
+                    word, wtype = split
+
 
                 if wtype == 'NNP' or wtype == 'NNG':
                     return True
