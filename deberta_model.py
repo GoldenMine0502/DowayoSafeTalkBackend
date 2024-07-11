@@ -60,7 +60,7 @@ class DebertaClassificationModel:
         model.config.num_labels = 2
         # model.config.max_position_embeddings = 768
         self.model = DebertaForSequenceClassification(model.config).to(device)
-        self.optimizer = AdamW(model.parameters(), lr=1e-3)
+        self.optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
         self.train_accuracy = []
         self.validation_accuracy = []
 
