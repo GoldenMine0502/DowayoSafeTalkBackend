@@ -105,9 +105,16 @@ class DebertaClassificationModel:
         inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(device)
         labels = labels.to(device)
 
-        loss = self.model(**inputs, labels=labels).loss
+        output = self.model(**inputs, labels=labels)
 
-        return loss.item()
+        predicted_class_id = output.logits.argmax(dim=1)
+
+        correct = 0
+        for predict, ans in zip(predicted_class_id, labels):
+            if predict == ans:
+                correct += 1
+
+        return output.loss.item(), correct, len(labels)
 
     def vali_one(self, inputs, labels):
         inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(device)
@@ -127,11 +134,16 @@ class DebertaClassificationModel:
 
     def train(self):
         losses = []
+        corrects = 0
+        total = 0
         for text, label in tqdm(self.trainloader, ncols=50):
-            loss = self.train_one(text, label)
+            loss, correct, all = self.train_one(text, label)
             losses.append(loss)
 
-        print("loss: {}".format(sum(losses) / len(losses)))
+            corrects += correct
+            total += all
+
+        print("loss: {}, train accuracy: {}%".format(sum(losses) / len(losses), round(corrects / total * 100, 2)))
 
     def validation(self):
         counts = 0
@@ -147,7 +159,7 @@ class DebertaClassificationModel:
     def process(self, epoch=10):
         for i in range(1, epoch + 1):
             print("epoch {}/{}:".format(i, epoch))
-            self.train()
+            # self.train()
             self.validation()
 
             torch.save(self.model, f'deberta_{i}.pt')
