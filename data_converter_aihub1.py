@@ -1,10 +1,17 @@
+import re
 from pathlib import Path
 
 from datasets import tqdm
 
-from text_util import extract_korean
+# 한글 범위의 정규 표현식 패턴
+korean_pattern = re.compile('[^ ㄱ-ㅣ가-힣]+')
 
 
+def extract_korean(text):
+    # 정규 표현식을 사용하여 한글만 추출
+    korean_only = korean_pattern.sub('', text)
+
+    return korean_only
 class DataConverterAihub1:
     def __init__(self):
         self.path = 'D:/datasets/한국어 음성/한국어_음성_분야'
@@ -30,3 +37,4 @@ class DataConverterAihub1:
 if __name__ == '__main__':
     aihub1 = DataConverterAihub1()
     aihub1.convert()
+

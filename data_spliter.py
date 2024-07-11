@@ -3,11 +3,11 @@ import random
 
 class DataSpliter:
     def __init__(self):
-        self.route = "dataset/result.txt"
-        self.train = "dataset/train.txt"
-        self.train_small = "dataset/train_small.txt"
-        self.validation = "dataset/validation_small.txt"
-        self.validation_small = "dataset/validation_small.txt"
+        self.route = "dataset/result_noclean.txt"
+        self.train = "dataset/train_noclean.txt"
+        self.train_small = "dataset/train_noclean_small.txt"
+        self.validation = "dataset/validation_noclean_small.txt"
+        self.validation_small = "dataset/validation_noclean_small.txt"
 
     def split_data(self):
         ratio = 0.5

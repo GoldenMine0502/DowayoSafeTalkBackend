@@ -2,6 +2,7 @@
 from pykospacing import Spacing
 from PyKomoran import *
 from datasets import tqdm
+from soynlp.normalizer import repeat_normalize
 
 spacing = Spacing()
 print('running test:', spacing('아 몬소리야 그건 또'))
@@ -16,7 +17,7 @@ class PreProcessKomoran:
             './dataset/data/korean_selectstar_result.txt',
         ]
 
-        self.result_path = 'dataset/result.txt'
+        self.result_path = 'dataset/result_noclean.txt'
         # self.punct = "/-'?!.,#$%\'()*+-/:;<=>@[\\]^_`{|}~" + '""“”’' + '∞θ÷α•à−β∅³π‘₹´°£€\\×™√²—–&'
         # self.punct_mapping = {"‘": "'", "₹": "e", "´": "'", "°": "", "€": "e", "™": "tm", "√": " sqrt ", "×": "x", "²": "2",
         #                  "—": "-", "–": "-", "’": "'", "_": "-", "`": "'", '”': '"', '“': '"', "£": "e",
@@ -54,7 +55,7 @@ class PreProcessKomoran:
 
         # print(text)
         text = spacing(text)
-        # text = repeat_normalize(text, num_repeats=2)
+        text = repeat_normalize(text, num_repeats=2)
 
 
         # 즵 즺 즫 즥 즷 즴 즨 즹 즬 즿 즼 즽 즻 즻 즾
@@ -97,27 +98,29 @@ class PreProcessKomoran:
                 if len(split) == 1:
                     return '#' not in text
 
-                if len(split) > 2:
-                    word = '/'.join(split[:-1])
-                    wtype = split[-1]
-                else:
-                    word, wtype = split
+                return True
+                # if len(split) > 2:
+                #     word = '/'.join(split[:-1])
+                #     wtype = split[-1]
+                # else:
+                #     word, wtype = split
+                #
+                #
+                # if wtype == 'NNP' or wtype == 'NNG':
+                #     return True
+                #
+                # if wtype == 'VV' or wtype == 'VA':
+                #     return True
+                #
+                # return False
 
-
-                if wtype == 'NNP' or wtype == 'NNG':
-                    return True
-
-                if wtype == 'VV' or wtype == 'VA':
-                    return True
-
-                return False
-
+            orig = text
             # print(text)
             text, label = text.split("|")
             text = self.clean_text(text)
 
             if len(text) < 5:
-                print("len", len(text), text)
+                print("len", len(text), text, orig)
                 continue
 
             res = self.komoran.get_plain_text(text).split(' ')
@@ -127,7 +130,7 @@ class PreProcessKomoran:
             # print(text, res, len(res))
 
             if len(res) < 3:
-                print("list len", len(res), res)
+                print("list len", len(res), res, orig)
                 continue
 
             results.append((res, label))
