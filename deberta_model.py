@@ -199,7 +199,7 @@ class DebertaClassificationModel:
         checkpoint = torch.load(f'chkpt/deberta_{epoch}.pth')
 
         self.model.load_state_dict(checkpoint['model_state_dict'])
-        self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        # self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         self.train_accuracy.extend(checkpoint['train_accuracy'])
         self.validation_accuracy.extend(checkpoint['validation_accuracy'])
 
@@ -207,7 +207,7 @@ class DebertaClassificationModel:
         checkpoint = {
             'epoch': epoch,
             'model_state_dict': self.model.state_dict(),
-            'optimizer_state_dict': self.optimizer.state_dict(),
+            # 'optimizer_state_dict': self.optimizer.state_dict(),
             'train_accuracy': train_acc,
             'validation_accuracy': validation_acc
         }
