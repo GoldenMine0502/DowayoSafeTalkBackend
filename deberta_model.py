@@ -7,6 +7,8 @@ from matplotlib import pyplot as plt
 from torch.utils.data import Dataset, DataLoader
 from transformers import AutoTokenizer, DebertaForSequenceClassification, DebertaConfig, AdamW
 
+from yamlload import Config
+
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
@@ -220,7 +222,7 @@ class DebertaClassificationModel:
 
 # 학습 안시키면 정확도 51%
 if __name__ == "__main__":
-    config = yaml.safe_load('config/config.yml')
+    config = Config('config/config.yml')
 
     print('text loader is loaded')
 
