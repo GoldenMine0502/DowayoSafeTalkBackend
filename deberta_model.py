@@ -82,7 +82,7 @@ class DebertaClassificationModel:
         model.config.num_labels = 2
         # model.config.max_position_embeddings = 768
         self.model = DebertaForSequenceClassification(model.config).to(device)
-        # self.optimizer = torch.optim.AdamW(model.parameters(), lr=config.train.learning_rate)
+        self.optimizer = torch.optim.AdamW(model.parameters(), lr=config.train.learning_rate)
         self.train_accuracy = []
         self.validation_accuracy = []
 
@@ -90,7 +90,7 @@ class DebertaClassificationModel:
         inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(device)
         labels = labels.to(device)
 
-        # self.optimizer.zero_grad()
+        self.optimizer.zero_grad()
         output = self.model(**inputs, labels=labels)
 
         predicted_class_id = output.logits.argmax(dim=1)
@@ -100,7 +100,7 @@ class DebertaClassificationModel:
             if predict == ans:
                 correct += 1
 
-        # self.optimizer.step()
+        self.optimizer.step()
 
         return output.loss.item(), correct, len(labels)
 
