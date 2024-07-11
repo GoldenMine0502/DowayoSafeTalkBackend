@@ -12,6 +12,7 @@ from yamlload import Config
 device = "cuda" if torch.cuda.is_available() else "cpu"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
+
 def collate_fn(batch):
     data = []
     labels = []
@@ -195,7 +196,8 @@ class DebertaClassificationModel:
         os.makedirs('chkpt', exist_ok=True)
         torch.save(checkpoint, f'chkpt/deberta_{epoch}.pth')
 
-    def show_plot(self, train_accuracies, validation_accuracies):
+    @staticmethod
+    def show_plot(train_accuracies, validation_accuracies):
         # 에포크 수
         epochs = range(1, len(train_accuracies) + 1)
 
@@ -222,14 +224,14 @@ class DebertaClassificationModel:
 
 # 학습 안시키면 정확도 51%
 if __name__ == "__main__":
-    config = Config('config/config.yml')
+    c = Config('config/config.yml')
 
     print('text loader is loaded')
 
-    trainer = DebertaClassificationModel(config)
+    trainer = DebertaClassificationModel(c)
     trainer.process(
-        epoch=config.train.epoch,
-        start_epoch=config.train.start_epoch
+        epoch=c.train.epoch,
+        start_epoch=c.train.start_epoch
     )
 
 # pip3 freeze > requirements.txt
