@@ -1,11 +1,11 @@
 import json
 from pathlib import Path
 
-from tqdm import tqdm
+from pykospacing import Spacing
+from datasets import tqdm
+from soynlp.normalizer import repeat_normalize
 
-
-class DataConverter:
-    pass
+spacing = Spacing()
 
 
 # 데이터셋은 결국 text|value로 회귀한다.
@@ -50,6 +50,9 @@ class DataConverterSelectStar:
                 if len(text) < 3:
                     print(file_path, raw_text)
                     continue
+
+                text = spacing(text)
+                text = repeat_normalize(text, num_repeats=2)
 
                 bad_content_sum = sum(map(lambda x: data[x], bad_content_keywords))
 

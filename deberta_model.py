@@ -5,7 +5,8 @@ import yaml
 from datasets import tqdm
 from matplotlib import pyplot as plt
 from torch.utils.data import Dataset, DataLoader
-from transformers import AutoTokenizer, DebertaForSequenceClassification, DebertaConfig, AdamW
+from transformers import AutoTokenizer, DebertaForSequenceClassification, DebertaConfig, AdamW, \
+    DebertaV2ForSequenceClassification, DebertaV2Config
 
 from yamlload import Config
 
@@ -72,18 +73,34 @@ class DebertaClassificationModel:
 
         self.testloader = None
         # model.config
-        self.tokenizer = AutoTokenizer.from_pretrained("microsoft/deberta-base")
-        model = DebertaForSequenceClassification.from_pretrained("microsoft/deberta-base")
-        # model.config.max_position_embeddings = 1024
-        # del model.config.id2label[1]
+        self.tokenizer = AutoTokenizer.from_pretrained("skt/kobert-base-v1")
+        # model = DebertaV2ForSequenceClassification.from_pretrained("microsoft/deberta-base")
+        # # model.config.max_position_embeddings = 1024
+        # # del model.config.id2label[1]
+        #
+        # # self.model = DebertaForSequenceClassification(model.config).to(device)
+        # # num_labels = len(model.config.id2label)
+        #
+        # model.config.num_labels = 2
+        # model.config.vocab_size = 100000
+        # model.config.hidden_size = 1000
 
-        # self.model = DebertaForSequenceClassification(model.config).to(device)
-        # num_labels = len(model.config.id2label)
+        config = DebertaV2Config(
+            vocab_size=50000,  # 한국어 대규모 데이터셋을 위한 적절한 vocab size
+            hidden_size=1024,  # 라지 모델의 히든 크기
+            num_hidden_layers=24,  # 레이어 개수
+            num_attention_heads=16,  # 어텐션 헤드 개수
+            intermediate_size=4096,  # 피드포워드 레이어 크기
+            max_position_embeddings=512,  # 최대 시퀀스 길이
+            type_vocab_size=2,
+            layer_norm_eps=1e-7,
+            hidden_dropout_prob=0.1,
+            attention_probs_dropout_prob=0.1,
+        )
 
-        model.config.num_labels = 2
         # model.config.max_position_embeddings = 768
-        self.model = DebertaForSequenceClassification(model.config).to(device)
-        self.optimizer = torch.optim.AdamW(model.parameters(), lr=config.train.learning_rate)
+        self.model = DebertaV2ForSequenceClassification(config).to(device)
+        self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=config.train.learning_rate)
         self.train_accuracy = []
         self.validation_accuracy = []
 
@@ -198,6 +215,8 @@ class DebertaClassificationModel:
 
     @staticmethod
     def show_plot(train_accuracies, validation_accuracies):
+        print(train_accuracies)
+        print(validation_accuracies)
         # 에포크 수
         epochs = range(1, len(train_accuracies) + 1)
 

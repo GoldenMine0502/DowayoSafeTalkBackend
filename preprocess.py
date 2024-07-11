@@ -54,8 +54,8 @@ class PreProcessKomoran:
         text = text.replace('/', '')
 
         # print(text)
-        text = spacing(text)
-        text = repeat_normalize(text, num_repeats=2)
+        # text = spacing(text)
+        # text = repeat_normalize(text, num_repeats=2)
 
 
         # 즵 즺 즫 즥 즷 즴 즨 즹 즬 즿 즼 즽 즻 즻 즾
@@ -113,6 +113,12 @@ class PreProcessKomoran:
                 #     return True
                 #
                 # return False
+
+            def map_sw(text):
+                word, wtype = text.split('/')
+
+                if wtype[0] == 'V' and (wtype != 'VV' or wtype != 'VA'):
+                    word = '다'
 
             orig = text
             # print(text)
