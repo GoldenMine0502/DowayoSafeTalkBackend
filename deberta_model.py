@@ -161,7 +161,7 @@ class DebertaClassificationModel:
         if start_epoch < 1:
             raise Exception("에포크는 1이상의 정수여야 합니다")
 
-        if start_epoch > epoch:
+        if start_epoch > 1:
             self.load_weights(start_epoch - 1)  # 현재 시작할 에포크 - 1당시 값으로 설정 후 학습
 
         for i in range(start_epoch, epoch + 1):
