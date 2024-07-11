@@ -1,5 +1,7 @@
+import os
 
 import torch
+import yaml
 from datasets import tqdm
 from matplotlib import pyplot as plt
 from torch.utils.data import Dataset, DataLoader
@@ -43,11 +45,29 @@ class TextLoader(Dataset):
 
 
 class DebertaClassificationModel:
-    def __init__(self, trainloader, validationloader, testloader):
-        self.trainloader = trainloader
-        self.validationloader = validationloader
-        self.testloader = testloader
+    def __init__(self, config):
+        batch_size = config.train.batch_size
+        num_workers = config.train.num_workers
 
+        self.trainloader = DataLoader(dataset=TextLoader([config.data.train]),
+                                      batch_size=batch_size,
+                                      shuffle=True,
+                                      num_workers=num_workers,
+                                      collate_fn=collate_fn,
+                                      pin_memory=True,
+                                      drop_last=False,
+                                      sampler=None)
+
+        self.validationloader = DataLoader(dataset=TextLoader([config.data.validation]),
+                                           batch_size=batch_size,
+                                           shuffle=True,
+                                           num_workers=num_workers,
+                                           collate_fn=collate_fn,
+                                           pin_memory=True,
+                                           drop_last=False,
+                                           sampler=None)
+
+        self.testloader = None
         # model.config
         self.tokenizer = AutoTokenizer.from_pretrained("microsoft/deberta-base")
         model = DebertaForSequenceClassification.from_pretrained("microsoft/deberta-base")
@@ -60,10 +80,9 @@ class DebertaClassificationModel:
         model.config.num_labels = 2
         # model.config.max_position_embeddings = 768
         self.model = DebertaForSequenceClassification(model.config).to(device)
-        self.optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
+        self.optimizer = torch.optim.AdamW(model.parameters(), lr=config.train.learning_rate)
         self.train_accuracy = []
         self.validation_accuracy = []
-
 
     def train_one(self, inputs, labels):
         inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(device)
@@ -155,7 +174,7 @@ class DebertaClassificationModel:
         self.train_accuracy.clear()
         self.validation_accuracy.clear()
 
-        checkpoint = torch.load(f'deberta_{epoch}.pth')
+        checkpoint = torch.load(f'chkpt/deberta_{epoch}.pth')
 
         self.model.load_state_dict(checkpoint['model_state_dict'])
         self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
@@ -170,7 +189,9 @@ class DebertaClassificationModel:
             'train_accuracy': train_acc,
             'validation_accuracy': validation_acc
         }
-        torch.save(checkpoint, f'deberta_{epoch}.pth')
+
+        os.makedirs('chkpt', exist_ok=True)
+        torch.save(checkpoint, f'chkpt/deberta_{epoch}.pth')
 
     def show_plot(self, train_accuracies, validation_accuracies):
         # 에포크 수
@@ -196,39 +217,15 @@ class DebertaClassificationModel:
         # 그래프 보여주기
         plt.show()
 
+
 # 학습 안시키면 정확도 51%
 if __name__ == "__main__":
-    batch_size = 4
-    num_workers = 4
-    # l1 = TextLoader(["./dataset/train.txt"])
-    # l2 = TextLoader(["./dataset/validation.txt"])
-    # testloader = TextLoader(["./dataset/validation.txt"]
-    # l3 = None  # TODO
-    l1 = DataLoader(dataset=TextLoader(["./dataset/train.txt"]),
-                    batch_size=batch_size,
-                    shuffle=True,
-                    num_workers=num_workers,
-                    collate_fn=collate_fn,
-                    pin_memory=True,
-                    drop_last=False,
-                    sampler=None)
-
-    l2 = DataLoader(dataset=TextLoader(["./dataset/validation.txt"]),
-                    batch_size=batch_size,
-                    shuffle=True,
-                    num_workers=num_workers,
-                    collate_fn=collate_fn,
-                    pin_memory=True,
-                    drop_last=False,
-                    sampler=None)
-
-    l3 = None
+    config = yaml.safe_load('config/config.yml')
 
     print('text loader is loaded')
 
-    trainer = DebertaClassificationModel(l1, l2, l3)
+    trainer = DebertaClassificationModel(config)
     trainer.process(epoch=30, start_epoch=1)
-
 
 # pip3 freeze > requirements.txt
 # pip install -r requirements.txt

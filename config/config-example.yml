@@ -1,0 +1,11 @@
+data:
+  train: 'dataset/train.txt'
+  validation: 'dataset/validation.txt'
+  test: 'dataset/test.txt'
+
+train:
+  batch_size: 4
+  start_epoch: 1
+  epoch: 30
+  num_workers: 4
+  learning_rate: 0.001
