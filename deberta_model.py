@@ -74,7 +74,7 @@ class DebertaClassificationModel:
         self.testloader = None
         # model.config
         self.tokenizer = AutoTokenizer.from_pretrained("skt/kobert-base-v1")
-        model = DebertaV2ForSequenceClassification.from_pretrained("microsoft/deberta-v2-base")
+        model = DebertaV2ForSequenceClassification.from_pretrained("microsoft/deberta-v2-xlarge")
         # # model.config.max_position_embeddings = 1024
         # # del model.config.id2label[1]
         #
