@@ -69,6 +69,7 @@ class DebertaClassificationModel:
         inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(device)
         labels = labels.to(device)
 
+        self.optimizer.zero_grad()
         output = self.model(**inputs, labels=labels)
 
         predicted_class_id = output.logits.argmax(dim=1)
@@ -198,6 +199,7 @@ class DebertaClassificationModel:
 # 학습 안시키면 정확도 51%
 if __name__ == "__main__":
     batch_size = 4
+    num_workers = 4
     # l1 = TextLoader(["./dataset/train.txt"])
     # l2 = TextLoader(["./dataset/validation.txt"])
     # testloader = TextLoader(["./dataset/validation.txt"]
@@ -205,7 +207,7 @@ if __name__ == "__main__":
     l1 = DataLoader(dataset=TextLoader(["./dataset/train.txt"]),
                     batch_size=batch_size,
                     shuffle=True,
-                    num_workers=1,
+                    num_workers=num_workers,
                     collate_fn=collate_fn,
                     pin_memory=True,
                     drop_last=False,
@@ -214,7 +216,7 @@ if __name__ == "__main__":
     l2 = DataLoader(dataset=TextLoader(["./dataset/validation.txt"]),
                     batch_size=batch_size,
                     shuffle=True,
-                    num_workers=1,
+                    num_workers=num_workers,
                     collate_fn=collate_fn,
                     pin_memory=True,
                     drop_last=False,
