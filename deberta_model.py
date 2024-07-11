@@ -6,7 +6,7 @@ from datasets import tqdm
 from matplotlib import pyplot as plt
 from torch.utils.data import Dataset, DataLoader
 from transformers import AutoTokenizer, DebertaForSequenceClassification, DebertaConfig, AdamW, \
-    DebertaV2ForSequenceClassification, DebertaV2Config
+    DebertaV2ForSequenceClassification, DebertaV2Config, DebertaV2Tokenizer
 
 from yamlload import Config
 
@@ -85,7 +85,7 @@ class DebertaClassificationModel:
         # model.config.vocab_size = 100000
         # model.config.hidden_size = 1000
 
-        config = DebertaV2Config(
+        deberta_config = DebertaV2Config(
             vocab_size=50000,  # 한국어 대규모 데이터셋을 위한 적절한 vocab size
             hidden_size=1024,  # 라지 모델의 히든 크기
             num_hidden_layers=24,  # 레이어 개수
@@ -99,7 +99,7 @@ class DebertaClassificationModel:
         )
 
         # model.config.max_position_embeddings = 768
-        self.model = DebertaV2ForSequenceClassification(config).to(device)
+        self.model = DebertaV2ForSequenceClassification(deberta_config).to(device)
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=config.train.learning_rate)
         self.train_accuracy = []
         self.validation_accuracy = []
@@ -118,6 +118,7 @@ class DebertaClassificationModel:
             if predict == ans:
                 correct += 1
 
+        output.loss.backward()
         self.optimizer.step()
 
         return output.loss.item(), correct, len(labels)

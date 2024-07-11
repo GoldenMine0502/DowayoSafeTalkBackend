@@ -114,11 +114,11 @@ class PreProcessKomoran:
                 #
                 # return False
 
-            def map_sw(text):
-                word, wtype = text.split('/')
-
-                if wtype[0] == 'V' and (wtype != 'VV' or wtype != 'VA'):
-                    word = '다'
+            # def map_sw(text):
+            #     word, wtype = text.split('/')
+            #
+            #     if wtype[0] == 'V' and (wtype != 'VV' or wtype != 'VA'):
+            #         word = '다'
 
             orig = text
             # print(text)

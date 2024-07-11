@@ -6,7 +6,7 @@ class DataSpliter:
         self.route = "dataset/result_noclean.txt"
         self.train = "dataset/train_noclean.txt"
         self.train_small = "dataset/train_noclean_small.txt"
-        self.validation = "dataset/validation_noclean_small.txt"
+        self.validation = "dataset/validation_noclean.txt"
         self.validation_small = "dataset/validation_noclean_small.txt"
 
     def split_data(self):
