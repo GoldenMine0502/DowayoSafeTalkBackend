@@ -74,7 +74,7 @@ class DebertaClassificationModel:
         self.testloader = None
         # model.config
         self.tokenizer = AutoTokenizer.from_pretrained("skt/kobert-base-v1")
-        model = DebertaV2ForSequenceClassification.from_pretrained("microsoft/deberta-v2-xlarge")
+        model = DebertaForSequenceClassification.from_pretrained("microsoft/deberta-base")
         # # model.config.max_position_embeddings = 1024
         # # del model.config.id2label[1]
         #
@@ -99,7 +99,7 @@ class DebertaClassificationModel:
         # )
 
         # model.config.max_position_embeddings = 768
-        self.model = DebertaV2ForSequenceClassification(model.config).to(device)
+        self.model = DebertaForSequenceClassification(model.config).to(device)
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=config.train.learning_rate)
         self.train_accuracy = []
         self.validation_accuracy = []
