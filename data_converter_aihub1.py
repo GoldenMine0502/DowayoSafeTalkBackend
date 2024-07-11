@@ -20,7 +20,7 @@ class DataConverterAihub1:
 
         for path in tqdm(all_files, ncols=60):
             with open(path, 'rt') as file:
-                text = file.read().strip()
+                text = file.read().strip().replace("  ", " ")
 
             text = extract_korean(text).strip(' ')
             os.write(f"{text}|0\n")

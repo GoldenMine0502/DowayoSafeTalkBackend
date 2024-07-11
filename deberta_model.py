@@ -1,46 +1,9 @@
-# from transformers import DebertaConfig, DebertaModel
-# from transformers import DebertaTokenizer
-#
-# # Initializing a DeBERTa microsoft/deberta-base style configuration
-# configuration = DebertaConfig()
-#
-# # Initializing a model (with random weights) from the microsoft/deberta-base style configuration
-# model = DebertaModel(configuration)
-#
-# # Accessing the model configuration
-# configuration = model.config
-#
-#
-# tokenizer = DebertaTokenizer.from_pretrained("microsoft/deberta-base")
-# tokenizer("Hello world")["input_ids"]
-# [1, 31414, 232, 2]
-#
-# tokenizer(" Hello world")["input_ids"]
-# [1, 20920, 232, 2]
-
-# from transformers import AutoTokenizer, DebertaModel
-#
-# tokenizer = AutoTokenizer.from_pretrained("microsoft/deberta-base")
-# model = DebertaModel.from_pretrained("microsoft/deberta-base")
-#
-# # Hello [1, 3, 768]
-# # Hello, World! [1, 6, 768]
-# # a [1, 3, 768]
-# # apple is nice [1, 5, 768] [[    1, 27326,    16,  2579,     2]]
-# # banana is nice [1, 6, 8] tensor([[   1, 7384, 1113,   16, 2579,    2]]
-#
-# inputs = tokenizer("apple is nice", return_tensors="pt")
-# print(inputs)
-# outputs = model(**inputs)
-#
-# last_hidden_states = outputs.last_hidden_state
-#
-# print(last_hidden_states, last_hidden_states.shape)
 
 import torch
 from datasets import tqdm
+from matplotlib import pyplot as plt
 from torch.utils.data import Dataset, DataLoader
-from transformers import AutoTokenizer, DebertaForSequenceClassification
+from transformers import AutoTokenizer, DebertaForSequenceClassification, DebertaConfig, AdamW
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -80,32 +43,45 @@ class TextLoader(Dataset):
 
 
 class DebertaClassificationModel:
-    def __init__(self, trainloader, validationloader, testloader, checkpoint=None):
+    def __init__(self, trainloader, validationloader, testloader):
         self.trainloader = trainloader
         self.validationloader = validationloader
         self.testloader = testloader
 
         # model.config
         self.tokenizer = AutoTokenizer.from_pretrained("microsoft/deberta-base")
-        model = DebertaForSequenceClassification.from_pretrained("microsoft/deberta-base").to(device)
+        model = DebertaForSequenceClassification.from_pretrained("microsoft/deberta-base")
         # model.config.max_position_embeddings = 1024
         # del model.config.id2label[1]
 
         # self.model = DebertaForSequenceClassification(model.config).to(device)
-        num_labels = len(model.config.id2label)
-        self.model = DebertaForSequenceClassification.from_pretrained("microsoft/deberta-base",
-                                                                      num_labels=num_labels).to(device)
+        # num_labels = len(model.config.id2label)
 
-        if checkpoint is not None:
-            self.model = torch.load(checkpoint).to(device)
+        model.config.num_labels = 2
+        # model.config.max_position_embeddings = 768
+        self.model = DebertaForSequenceClassification(model.config).to(device)
+        self.optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
+        self.train_accuracy = []
+        self.validation_accuracy = []
+
 
     def train_one(self, inputs, labels):
         inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(device)
         labels = labels.to(device)
 
-        loss = self.model(**inputs, labels=labels).loss
+        self.optimizer.zero_grad()
+        output = self.model(**inputs, labels=labels)
 
-        return loss.item()
+        predicted_class_id = output.logits.argmax(dim=1)
+
+        correct = 0
+        for predict, ans in zip(predicted_class_id, labels):
+            if predict == ans:
+                correct += 1
+
+        self.optimizer.step()
+
+        return output.loss.item(), correct, len(labels)
 
     def vali_one(self, inputs, labels):
         inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(device)
@@ -124,14 +100,27 @@ class DebertaClassificationModel:
         return correct, len(labels)
 
     def train(self):
+        self.model.train()
+
         losses = []
+        corrects = 0
+        total = 0
         for text, label in tqdm(self.trainloader, ncols=50):
-            loss = self.train_one(text, label)
+            loss, correct, all = self.train_one(text, label)
             losses.append(loss)
 
-        print("loss: {}".format(sum(losses) / len(losses)))
+            corrects += correct
+            total += all
+
+        train_accuracy = round(corrects / total * 100, 2)
+
+        print("loss: {}, train accuracy: {}%".format(sum(losses) / len(losses), train_accuracy))
+
+        return train_accuracy
 
     def validation(self):
+        self.model.eval()
+
         counts = 0
         corrects = 0
         for text, label in tqdm(self.validationloader, ncols=50):
@@ -140,18 +129,77 @@ class DebertaClassificationModel:
             corrects += correct
             counts += count
 
-        print("validation accuracy: {}%".format(round(corrects / counts * 100, 2)))
+        validation_accuracy = round(corrects / counts * 100, 2)
 
-    def process(self, epoch=10):
-        for i in range(1, epoch + 1):
-            print("epoch {}:".format(i))
-            self.train()
-            self.validation()
+        print("validation accuracy: {}%".format(validation_accuracy))
 
+        return validation_accuracy
+
+    def process(self, epoch=10, start_epoch=1):
+        if start_epoch < 1:
+            raise Exception("에포크는 1이상의 정수여야 합니다")
+
+        if start_epoch > epoch:
+            self.load_weights(start_epoch - 1)  # 현재 시작할 에포크 - 1당시 값으로 설정 후 학습
+
+        for i in range(start_epoch, epoch + 1):
+            print("epoch {}/{}:".format(i, epoch))
+            self.train_accuracy.append(self.train())
+            self.validation_accuracy.append(self.validation())
+
+            torch.save(self.model, f'deberta_{i}.pt')
+
+        self.show_plot(self.train_accuracy, self.validation_accuracy)
+
+    def load_weights(self, epoch):
+        self.train_accuracy.clear()
+        self.validation_accuracy.clear()
+
+        checkpoint = torch.load(f'deberta_{epoch}.pth')
+
+        self.model.load_state_dict(checkpoint['model_state_dict'])
+        self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        self.train_accuracy.extend(checkpoint['train_accuracy'])
+        self.validation_accuracy.extend(checkpoint['validation_accuracy'])
+
+    def save_weights(self, epoch, train_acc, validation_acc):
+        checkpoint = {
+            'epoch': epoch,
+            'model_state_dict': self.model.state_dict(),
+            'optimizer_state_dict': self.optimizer.state_dict(),
+            'train_accuracy': train_acc,
+            'validation_accuracy': validation_acc
+        }
+        torch.save(checkpoint, f'deberta_{epoch}.pth')
+
+    def show_plot(self, train_accuracies, validation_accuracies):
+        # 에포크 수
+        epochs = range(1, len(train_accuracies) + 1)
+
+        # 플롯 크기 설정
+        plt.figure(figsize=(10, 6))
+
+        # train 정확도 플로팅
+        plt.plot(epochs, train_accuracies, 'b', label='Train Accuracy')
+
+        # validation 정확도 플로팅
+        plt.plot(epochs, validation_accuracies, 'r', label='Validation Accuracy')
+
+        # 제목 및 축 레이블 설정
+        plt.title('Train and Validation Accuracy')
+        plt.xlabel('Epochs')
+        plt.ylabel('Accuracy')
+
+        # 범례 추가
+        plt.legend()
+
+        # 그래프 보여주기
+        plt.show()
 
 # 학습 안시키면 정확도 51%
 if __name__ == "__main__":
-    batch_size = 2
+    batch_size = 4
+    num_workers = 4
     # l1 = TextLoader(["./dataset/train.txt"])
     # l2 = TextLoader(["./dataset/validation.txt"])
     # testloader = TextLoader(["./dataset/validation.txt"]
@@ -159,7 +207,7 @@ if __name__ == "__main__":
     l1 = DataLoader(dataset=TextLoader(["./dataset/train.txt"]),
                     batch_size=batch_size,
                     shuffle=True,
-                    num_workers=1,
+                    num_workers=num_workers,
                     collate_fn=collate_fn,
                     pin_memory=True,
                     drop_last=False,
@@ -168,7 +216,7 @@ if __name__ == "__main__":
     l2 = DataLoader(dataset=TextLoader(["./dataset/validation.txt"]),
                     batch_size=batch_size,
                     shuffle=True,
-                    num_workers=1,
+                    num_workers=num_workers,
                     collate_fn=collate_fn,
                     pin_memory=True,
                     drop_last=False,
@@ -179,6 +227,8 @@ if __name__ == "__main__":
     print('text loader is loaded')
 
     trainer = DebertaClassificationModel(l1, l2, l3)
-    trainer.process(epoch=1)
+    trainer.process(epoch=30, start_epoch=1)
 
-    torch.save(trainer.model, 'deberta.pt')
+
+# pip3 freeze > requirements.txt
+# pip install -r requirements.txt
