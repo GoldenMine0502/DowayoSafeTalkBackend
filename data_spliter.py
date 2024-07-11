@@ -3,13 +3,13 @@ import random
 
 class DataSpliter:
     def __init__(self):
-        self.route = "dataset/all.txt"
+        self.route = "dataset/result.txt"
         self.train = "dataset/train.txt"
         self.validation = "dataset/validation.txt"
 
     def split_data(self):
         ratio = 0.5
-        all = 2000
+        all = 2500
 
         zero = int(round(all * ratio))
         one = all - zero
@@ -20,7 +20,7 @@ class DataSpliter:
         for line in open(self.route):
             text, label = line.split("|")
 
-            if label == 0:
+            if int(label) == 0:
                 zeros.append(line)
             else:
                 ones.append(line)
@@ -36,15 +36,18 @@ class DataSpliter:
         trains.extend(zeros[zero:])
         trains.extend(ones[one:])
 
-        with open("train.txt", "wt") as file:
+        print(len(zeros), len(ones))
+        print(len(trains), len(validations))
+
+        with open(self.train, "wt") as file:
             for train in trains:
                 file.write(train)
-                file.write('\n')
+                # file.write('\n')
 
-        with open("validation.txt", "wt") as file:
+        with open(self.validation, "wt") as file:
             for validation in validations:
                 file.write(validation)
-                file.write('\n')
+                # file.write('\n')
 
 
 if __name__ == "__main__":

@@ -16,7 +16,7 @@ class PreProcessKomoran:
             './dataset/data/korean_selectstar_result.txt',
         ]
 
-        self.result_path = 'dataset/train.txt'
+        self.result_path = 'dataset/result.txt'
         # self.punct = "/-'?!.,#$%\'()*+-/:;<=>@[\\]^_`{|}~" + '""“”’' + '∞θ÷α•à−β∅³π‘₹´°£€\\×™√²—–&'
         # self.punct_mapping = {"‘": "'", "₹": "e", "´": "'", "°": "", "€": "e", "™": "tm", "√": " sqrt ", "×": "x", "²": "2",
         #                  "—": "-", "–": "-", "’": "'", "_": "-", "`": "'", '”': '"', '“': '"', "£": "e",
@@ -116,11 +116,20 @@ class PreProcessKomoran:
             text, label = text.split("|")
             text = self.clean_text(text)
 
+            if len(text) < 5:
+                print("len", len(text), text)
+                continue
+
             res = self.komoran.get_plain_text(text).split(' ')
 
             res = list(filter(filter_sw, res))  # 필터링
             res = list(map(lambda x: x.split('/')[0], res))  # 대한민국/NNP 같은 단어가 있으면 슬래시 뒤 문자 떼버림
             # print(text, res, len(res))
+
+            if len(res) < 3:
+                print("list len", len(res), res)
+                continue
+
             results.append((res, label))
 
             # time.sleep(1)
