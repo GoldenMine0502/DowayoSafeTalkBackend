@@ -10,7 +10,7 @@ from transformers import AutoTokenizer, DebertaV2ForSequenceClassification, Debe
 
 from yamlload import Config
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
+device = "cuda:0" if torch.cuda.is_available() else "cpu"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
@@ -112,7 +112,12 @@ class DebertaClassificationModel:
         # )
 
         # model.config.max_position_embeddings = 768
-        self.model = nn.DataParallel(DebertaV2ForSequenceClassification(deberta_config), device_ids=[0, 1])
+        self.model = DebertaV2ForSequenceClassification(deberta_config)
+        if device == "cuda":
+            print(torch.cuda.device_count())
+            self.model = nn.DataParallel(self.model)
+
+        self.model.to(device)
         # summary(self.model, (4, 50))
         # self.model.apply(self.weights_init)
 
