@@ -121,7 +121,7 @@ class DebertaClassificationModel:
                 torch.nn.init.zeros_(m.bias)
 
     def train_one(self, inputs, labels):
-        inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(device)
+        inputs = self.tokenizer(inputs, return_tensors="pt", padding=True, truncation=True).to(device)
         if torch.isnan(inputs['input_ids']).any():
             raise Exception("input value has nan")
 
@@ -149,7 +149,7 @@ class DebertaClassificationModel:
         return loss.item(), correct, len(labels)
 
     def vali_one(self, inputs, labels):
-        inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(device)
+        inputs = self.tokenizer(inputs, return_tensors="pt", padding=True, truncation=True).to(device)
 
 
         with torch.no_grad():
