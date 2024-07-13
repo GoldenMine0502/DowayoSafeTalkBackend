@@ -121,8 +121,8 @@ class DebertaClassificationModel:
 
 
         # self.optimizer = create_xadam(self.model, config.train.epoch)
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=config.train.learning_rate)
-        # self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=5e-5)
+        # self.optimizer = torch.optim.Adam(self.model.parameters(), lr=config.train.learning_rate)
+        self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=5e-5)
         # torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
 
         self.train_accuracy = []
@@ -162,7 +162,7 @@ class DebertaClassificationModel:
 
         logits_with_softmax = self.softmax(logits)
 
-        loss = self.criterion(logits_with_softmax, labels)
+        loss = self.criterion(logits, labels)
 
         if torch.isnan(loss).any():
             raise Exception("loss has nan")
