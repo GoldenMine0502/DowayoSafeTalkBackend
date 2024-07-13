@@ -1,9 +1,10 @@
 from django.http import JsonResponse
 from rest_framework.decorators import api_view
 
-from mainapp.model.inference import DebertaInference
+from DowayoSafeTalk.deberta_model import DebertaClassificationModel
 
-deberta_inference = DebertaInference()
+c = Config('DowayoSafeTalk/config/config.yml')
+deberta_inference = DebertaClassificationModel(c)
 
 
 # Create your views here.
@@ -20,10 +21,10 @@ def check(request):
             }
         )
 
-    res = deberta_inference.inference(text)
-    res1 = res[0]
-    res2 = res[1]
-    verify = res[2]
+    logits, predicted_id = deberta_inference.inference(text)
+    res1 = logits[0]
+    res2 = logits[1]
+    verify = predicted_id[0]
 
     return JsonResponse(
         {
