@@ -127,14 +127,15 @@ class PreProcessKomoran:
             # print(text)
             texts = text.split("|")
             if len(texts) >= 3:
-                text = f'{' '.join(texts[:-1])}|{texts[-1]}'
+                first = ' '.join(texts[:-1])
+                text = f'{first}|{texts[-1]}'
 
             text, label = text.split("|")
             res = self.filter_text(text)
 
             if res is None:
                 continue
-            
+
             results.append((res, label))
 
             # time.sleep(1)
