@@ -113,7 +113,7 @@ class DebertaClassificationModel:
 
         # model.config.max_position_embeddings = 768
         self.model = DebertaV2ForSequenceClassification(deberta_config)
-        if device == "cuda":
+        if device == "cuda:0":
             print(torch.cuda.device_count())
             self.model = nn.DataParallel(self.model)
 
