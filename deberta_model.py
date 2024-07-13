@@ -177,10 +177,10 @@ class DebertaClassificationModel:
             loss, correct, all = self.train_one(text, label)
             losses.append(loss)
             losses_sum += loss
-            pbar.set_description(f"Train Accuracy: {round(sum(losses) / len(losses) * 100, 2)}%")
 
             corrects += correct
             total += all
+            pbar.set_description(f"{round(corrects / total * 100, 2)}%, loss: {round(losses_sum / len(losses), 2)}")
 
         train_accuracy = round(corrects / total * 100, 2)
 
