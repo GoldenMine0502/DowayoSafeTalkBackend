@@ -165,7 +165,7 @@ class DebertaClassificationModel:
 
         loss = self.criterion(logits, labels)
 
-        print(logits, logits_with_softmax, labels, loss.item())
+        # print(logits, logits_with_softmax, labels, loss.item())
         if torch.isnan(loss).any():
             raise Exception("loss has nan")
 
