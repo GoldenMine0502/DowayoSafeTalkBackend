@@ -5,7 +5,7 @@ from datasets import tqdm
 from matplotlib import pyplot as plt
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
-from transformers import AutoTokenizer, DebertaForSequenceClassification
+from transformers import AutoTokenizer, DebertaForSequenceClassification, DebertaV2ForSequenceClassification
 import torch.nn.functional as F
 
 from optimizer_utils import create_xadam
@@ -75,7 +75,7 @@ class DebertaClassificationModel:
         self.testloader = None
         # model.config
         self.tokenizer = AutoTokenizer.from_pretrained("skt/kobert-base-v1")
-        model = DebertaForSequenceClassification.from_pretrained("microsoft/deberta-base")
+        model = DebertaV2ForSequenceClassification.from_pretrained("microsoft/deberta-v3-large")
         # # model.config.max_position_embeddings = 1024
         # # del model.config.id2label[1]
         #
@@ -100,8 +100,8 @@ class DebertaClassificationModel:
         # )
 
         # model.config.max_position_embeddings = 768
-        self.model = DebertaForSequenceClassification(model.config).to(device)
-        self.model.apply(self.weights_init)
+        self.model = DebertaV2ForSequenceClassification(model.config).to(device)
+        # self.model.apply(self.weights_init)
 
         self.criterion = nn.CrossEntropyLoss()
 
@@ -112,6 +112,16 @@ class DebertaClassificationModel:
 
         self.train_accuracy = []
         self.validation_accuracy = []
+
+    def inference(self, inputs):
+        inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(device)
+
+        with torch.no_grad():
+            logits = self.model(**inputs).logits
+
+        predicted_class_id = logits.argmax(dim=1)
+
+        return logits, predicted_class_id
 
     @staticmethod
     def weights_init(m):
@@ -172,12 +182,15 @@ class DebertaClassificationModel:
         losses = []
         corrects = 0
         total = 0
-        for text, label in tqdm(self.trainloader, ncols=50):
+        losses_sum = 0
+        for text, label in (pbar := tqdm(self.trainloader, ncols=100)):
             loss, correct, all = self.train_one(text, label)
             losses.append(loss)
+            losses_sum += loss
 
             corrects += correct
             total += all
+            pbar.set_description(f"{round(corrects / total * 100, 2)}%, loss: {round(losses_sum / len(losses), 2)}")
 
         train_accuracy = round(corrects / total * 100, 2)
 
@@ -190,7 +203,7 @@ class DebertaClassificationModel:
 
         counts = 0
         corrects = 0
-        for text, label in tqdm(self.validationloader, ncols=50):
+        for text, label in tqdm(self.validationloader, ncols=100):
             correct, count = self.vali_one(text, label)
 
             corrects += correct
