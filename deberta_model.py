@@ -150,11 +150,11 @@ class DebertaClassificationModel:
         logits_with_softmax = self.softmax(logits)
 
         loss = self.criterion(logits_with_softmax, labels)
-        print(logits_with_softmax, labels, loss.item())
+        # print(logits_with_softmax, labels, loss.item())
         loss.backward()
 
         predicted_class_id = output.logits.argmax(dim=1)
-        print(predicted_class_id)
+        # print(predicted_class_id)
 
         correct = 0
         for predict, (zero, one) in zip(predicted_class_id, labels):
