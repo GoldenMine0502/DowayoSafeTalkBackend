@@ -100,7 +100,8 @@ class DebertaClassificationModel:
         # )
 
         # model.config.max_position_embeddings = 768
-        self.model = DebertaV2ForSequenceClassification(model.config).to(device)
+        # self.model = DebertaV2ForSequenceClassification(model.config).to(device)
+        self.model = DebertaV2ForSequenceClassification.from_pretrained("team-lucid/deberta-v3-base-korean").to(device)
         # self.model.apply(self.weights_init)
 
         self.criterion = nn.CrossEntropyLoss()
