@@ -5,7 +5,7 @@ from datasets import tqdm
 from matplotlib import pyplot as plt
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
-from transformers import AutoTokenizer, DebertaForSequenceClassification, DebertaV2ForSequenceClassification
+from transformers import AutoTokenizer, DebertaForSequenceClassification
 import torch.nn.functional as F
 
 from optimizer_utils import create_xadam
@@ -74,10 +74,8 @@ class DebertaClassificationModel:
 
         self.testloader = None
         # model.config
-        # team-lucid/deberta-v3-xlarge-korean
-        # team-lucid/deberta-v3-base-korean
-        self.tokenizer = AutoTokenizer.from_pretrained("team-lucid/deberta-v3-base-korean")
-        model = DebertaV2ForSequenceClassification.from_pretrained("team-lucid/deberta-v3-base-korean")
+        self.tokenizer = AutoTokenizer.from_pretrained("skt/kobert-base-v1")
+        model = DebertaForSequenceClassification.from_pretrained("microsoft/deberta-base")
         # # model.config.max_position_embeddings = 1024
         # # del model.config.id2label[1]
         #
@@ -102,8 +100,7 @@ class DebertaClassificationModel:
         # )
 
         # model.config.max_position_embeddings = 768
-        self.model = DebertaV2ForSequenceClassification(model.config).to(device)
-        # self.model = DebertaV2ForSequenceClassification.from_pretrained("team-lucid/deberta-v3-xlarge-korean").to(device)
+        self.model = DebertaForSequenceClassification(model.config).to(device)
         # self.model.apply(self.weights_init)
 
         self.criterion = nn.CrossEntropyLoss()
@@ -124,7 +121,7 @@ class DebertaClassificationModel:
                 torch.nn.init.zeros_(m.bias)
 
     def train_one(self, inputs, labels):
-        inputs = self.tokenizer(inputs, return_tensors="pt", padding=True, truncation=True).to(device)
+        inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(device)
         if torch.isnan(inputs['input_ids']).any():
             raise Exception("input value has nan")
 
@@ -152,7 +149,7 @@ class DebertaClassificationModel:
         return loss.item(), correct, len(labels)
 
     def vali_one(self, inputs, labels):
-        inputs = self.tokenizer(inputs, return_tensors="pt", padding=True, truncation=True).to(device)
+        inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(device)
 
 
         with torch.no_grad():
