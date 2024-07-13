@@ -105,8 +105,11 @@ class DebertaClassificationModel:
 
         self.criterion = nn.CrossEntropyLoss()
 
-        self.optimizer = create_xadam(self.model, config.train.epoch)
+
+        # self.optimizer = create_xadam(self.model, config.train.epoch)
+        self.optimizer = torch.optim.Adam(model.parameters(), lr=config.train.learning_rate)
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
+
         self.train_accuracy = []
         self.validation_accuracy = []
 
