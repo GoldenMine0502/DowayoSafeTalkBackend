@@ -2,12 +2,18 @@ from django.http import JsonResponse
 from rest_framework.decorators import api_view
 
 from DowayoSafeTalk.deberta_model import DebertaClassificationModel
-from DowayoSafeTalk.preprocess import PreProcessKomoran
+# from DowayoSafeTalk.preprocess import PreProcessKomoran
 from DowayoSafeTalk.yamlload import Config
 
 c = Config('DowayoSafeTalk/config/config.yml')
-deberta_inference = DebertaClassificationModel(c)
-text_preprocess = PreProcessKomoran()
+deberta_inference = DebertaClassificationModel(c, only_inference=True)
+# text_preprocess = PreProcessKomoran()
+print('processing')
+deberta_inference.process(
+    epoch=c.train.epoch,
+    start_epoch=c.train.start_epoch
+)
+print('proceed')
 
 # Create your views here.
 @api_view(['GET'])
@@ -22,8 +28,8 @@ def check(request):
                 'verify': 0,
             }
         )
-
-    text = text_preprocess.filter_text(text)
+    # text = text_preprocess.filter_text(text)
+    # text = text.replace('/', '')
 
     logits, predicted_id = deberta_inference.inference(text)
     res1 = logits[0]
