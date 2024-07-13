@@ -1,13 +1,14 @@
 import os
 
 import torch
-import yaml
 from datasets import tqdm
 from matplotlib import pyplot as plt
+import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
-from transformers import AutoTokenizer, DebertaForSequenceClassification, DebertaConfig, AdamW, \
-    DebertaV2ForSequenceClassification, DebertaV2Config, DebertaV2Tokenizer
+from transformers import AutoTokenizer, DebertaForSequenceClassification
+import torch.nn.functional as F
 
+from optimizer_utils import create_xadam
 from yamlload import Config
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -100,17 +101,37 @@ class DebertaClassificationModel:
 
         # model.config.max_position_embeddings = 768
         self.model = DebertaForSequenceClassification(model.config).to(device)
-        # self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=config.train.learning_rate)
+        self.model.apply(self.weights_init)
+
+        self.criterion = nn.CrossEntropyLoss()
+
+        self.optimizer = create_xadam(self.model, config.train.epoch)
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
         self.train_accuracy = []
         self.validation_accuracy = []
 
+    @staticmethod
+    def weights_init(m):
+        if isinstance(m, torch.nn.Linear):
+            torch.nn.init.xavier_uniform_(m.weight)
+            if m.bias is not None:
+                torch.nn.init.zeros_(m.bias)
+
     def train_one(self, inputs, labels):
         inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(device)
+        if torch.isnan(inputs['input_ids']).any():
+            raise Exception("input value has nan")
+
         labels = labels.to(device)
 
-        # self.optimizer.zero_grad()
-        output = self.model(**inputs, labels=labels)
-        loss = output.loss
+        self.optimizer.zero_grad()
+        output = self.model(**inputs)
+        logits = output.logits
+
+        # if torch.isnan(loss).any():
+        #     raise Exception("loss has nan")
+
+        loss = self.criterion(logits, labels)
         loss.backward()
 
         predicted_class_id = output.logits.argmax(dim=1)
@@ -120,12 +141,14 @@ class DebertaClassificationModel:
             if predict == ans:
                 correct += 1
 
-        # self.optimizer.step()
+        self.optimizer.step()
 
         return loss.item(), correct, len(labels)
 
     def vali_one(self, inputs, labels):
         inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(device)
+
+
         with torch.no_grad():
             logits = self.model(**inputs).logits
 
@@ -199,7 +222,7 @@ class DebertaClassificationModel:
         checkpoint = torch.load(f'chkpt/deberta_{epoch}.pth')
 
         self.model.load_state_dict(checkpoint['model_state_dict'])
-        # self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         self.train_accuracy.extend(checkpoint['train_accuracy'])
         self.validation_accuracy.extend(checkpoint['validation_accuracy'])
 
@@ -207,7 +230,7 @@ class DebertaClassificationModel:
         checkpoint = {
             'epoch': epoch,
             'model_state_dict': self.model.state_dict(),
-            # 'optimizer_state_dict': self.optimizer.state_dict(),
+            'optimizer_state_dict': self.optimizer.state_dict(),
             'train_accuracy': train_acc,
             'validation_accuracy': validation_acc
         }
@@ -246,8 +269,6 @@ class DebertaClassificationModel:
 # 학습 안시키면 정확도 51%
 if __name__ == "__main__":
     c = Config('config/config.yml')
-
-    print('text loader is loaded')
 
     trainer = DebertaClassificationModel(c)
     trainer.process(
