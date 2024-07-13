@@ -5,7 +5,7 @@ from datasets import tqdm
 from matplotlib import pyplot as plt
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
-from transformers import AutoTokenizer, DebertaForSequenceClassification
+from transformers import AutoTokenizer, DebertaForSequenceClassification, DebertaV2ForSequenceClassification
 import torch.nn.functional as F
 
 from optimizer_utils import create_xadam
@@ -74,8 +74,8 @@ class DebertaClassificationModel:
 
         self.testloader = None
         # model.config
-        self.tokenizer = AutoTokenizer.from_pretrained("skt/kobert-base-v1")
-        model = DebertaForSequenceClassification.from_pretrained("microsoft/deberta-base")
+        self.tokenizer = AutoTokenizer.from_pretrained("team-lucid/deberta-v3-base-korean")
+        model = DebertaV2ForSequenceClassification.from_pretrained("team-lucid/deberta-v3-base-korean")
         # # model.config.max_position_embeddings = 1024
         # # del model.config.id2label[1]
         #
@@ -100,7 +100,7 @@ class DebertaClassificationModel:
         # )
 
         # model.config.max_position_embeddings = 768
-        self.model = DebertaForSequenceClassification(model.config).to(device)
+        self.model = DebertaV2ForSequenceClassification(model.config).to(device)
         # self.model.apply(self.weights_init)
 
         self.criterion = nn.CrossEntropyLoss()
