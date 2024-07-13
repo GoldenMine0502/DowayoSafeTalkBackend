@@ -5,7 +5,8 @@ from datasets import tqdm
 from matplotlib import pyplot as plt
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
-from transformers import AutoTokenizer,DebertaV2ForSequenceClassification
+from torchsummary import summary
+from transformers import AutoTokenizer, DebertaV2ForSequenceClassification, DebertaV2Config
 
 from yamlload import Config
 
@@ -86,21 +87,22 @@ class DebertaClassificationModel:
         # model.config.vocab_size = 100000
         # model.config.hidden_size = 1000
 
-        # deberta_config = DebertaV2Config(
-        #     vocab_size=50000,  # 한국어 대규모 데이터셋을 위한 적절한 vocab size
-        #     hidden_size=1024,  # 라지 모델의 히든 크기
-        #     num_hidden_layers=24,  # 레이어 개수
-        #     num_attention_heads=16,  # 어텐션 헤드 개수
-        #     intermediate_size=4096,  # 피드포워드 레이어 크기
-        #     max_position_embeddings=512,  # 최대 시퀀스 길이
-        #     type_vocab_size=2,
-        #     layer_norm_eps=1e-7,
-        #     hidden_dropout_prob=0.1,
-        #     attention_probs_dropout_prob=0.1,
-        # )
+        deberta_config = DebertaV2Config(
+            vocab_size=128000,  # 한국어 대규모 데이터셋을 위한 적절한 vocab size
+            hidden_size=1024,  # 라지 모델의 히든 크기
+            num_hidden_layers=24,  # 레이어 개수
+            num_attention_heads=16,  # 어텐션 헤드 개수
+            intermediate_size=4096,  # 피드포워드 레이어 크기
+            max_position_embeddings=512,  # 최대 시퀀스 길이
+            type_vocab_size=2,
+            layer_norm_eps=1e-7,
+            hidden_dropout_prob=0.1,
+            attention_probs_dropout_prob=0.1,
+        )
 
         # model.config.max_position_embeddings = 768
-        self.model = DebertaV2ForSequenceClassification(model.config).to(device)
+        self.model = DebertaV2ForSequenceClassification(deberta_config).to(device)
+        # summary(self.model, (4, 50))
         # self.model.apply(self.weights_init)
 
         self.criterion = nn.CrossEntropyLoss()
@@ -135,6 +137,7 @@ class DebertaClassificationModel:
 
     def train_one(self, inputs, labels):
         inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(device)
+        print(inputs['input_ids'].shape)
         if torch.isnan(inputs['input_ids']).any():
             raise Exception("input value has nan")
 
@@ -168,6 +171,7 @@ class DebertaClassificationModel:
     def vali_one(self, inputs, labels):
         inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(device)
 
+        labels = labels.to(device)
 
         with torch.no_grad():
             logits = self.model(**inputs).logits
@@ -177,8 +181,8 @@ class DebertaClassificationModel:
         # print(logits.shape, labels.shape)
 
         correct = 0
-        for predict, ans in zip(predicted_class_id, labels):
-            if predict == ans:
+        for predict, (zero, one) in zip(predicted_class_id, labels):
+            if predict == one:
                 correct += 1
 
         return correct, len(labels)
