@@ -19,7 +19,7 @@ def collate_fn(batch):
 
     for text, label in batch:
         data.append(text)
-        labels.append([1 if label == 0 else 0, 1 if label == 1 else 0])
+        labels.append([1.0 if label == 0 else 0.0, 1.0 if label == 1 else 0.0])
 
     # print(len(data), len(labels))
     # print(labels)
