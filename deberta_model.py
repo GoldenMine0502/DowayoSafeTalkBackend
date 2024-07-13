@@ -87,21 +87,21 @@ class DebertaClassificationModel:
         # model.config.vocab_size = 100000
         # model.config.hidden_size = 1000
 
-        deberta_config = DebertaV2Config(
-            vocab_size=128000,  # 한국어 대규모 데이터셋을 위한 적절한 vocab size
-            hidden_size=1024,  # 라지 모델의 히든 크기
-            num_hidden_layers=24,  # 레이어 개수
-            num_attention_heads=16,  # 어텐션 헤드 개수
-            intermediate_size=4096,  # 피드포워드 레이어 크기
-            max_position_embeddings=512,  # 최대 시퀀스 길이
-            type_vocab_size=2,
-            layer_norm_eps=1e-7,
-            hidden_dropout_prob=0.1,
-            attention_probs_dropout_prob=0.1,
-        )
+        # deberta_config = DebertaV2Config(
+        #     vocab_size=128000,  # 한국어 대규모 데이터셋을 위한 적절한 vocab size
+        #     hidden_size=1024,  # 라지 모델의 히든 크기
+        #     num_hidden_layers=24,  # 레이어 개수
+        #     num_attention_heads=16,  # 어텐션 헤드 개수
+        #     intermediate_size=4096,  # 피드포워드 레이어 크기
+        #     max_position_embeddings=512,  # 최대 시퀀스 길이
+        #     type_vocab_size=2,
+        #     layer_norm_eps=1e-7,
+        #     hidden_dropout_prob=0.1,
+        #     attention_probs_dropout_prob=0.1,
+        # )
 
         # model.config.max_position_embeddings = 768
-        self.model = DebertaV2ForSequenceClassification(deberta_config).to(device)
+        self.model = DebertaV2ForSequenceClassification(model.config).to(device)
         # summary(self.model, (4, 50))
         # self.model.apply(self.weights_init)
 
