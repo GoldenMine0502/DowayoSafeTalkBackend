@@ -154,10 +154,11 @@ class DebertaClassificationModel:
         loss.backward()
 
         predicted_class_id = output.logits.argmax(dim=1)
+        print(predicted_class_id)
 
         correct = 0
-        for predict, ans in zip(predicted_class_id, labels):
-            if predict == ans:
+        for predict, (zero, one) in zip(predicted_class_id, labels):
+            if predict == one:
                 correct += 1
 
         self.optimizer.step()
