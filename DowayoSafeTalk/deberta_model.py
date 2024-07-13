@@ -48,29 +48,33 @@ class TextLoader(Dataset):
 
 
 class DebertaClassificationModel:
-    def __init__(self, config):
+    def __init__(self, config, only_inference=False):
         batch_size = config.train.batch_size
         num_workers = config.train.num_workers
 
-        self.trainloader = DataLoader(dataset=TextLoader([config.data.train]),
-                                      batch_size=batch_size,
-                                      shuffle=True,
-                                      num_workers=num_workers,
-                                      collate_fn=collate_fn,
-                                      pin_memory=True,
-                                      drop_last=False,
-                                      sampler=None)
+        if not only_inference:
+            self.trainloader = DataLoader(dataset=TextLoader([config.data.train]),
+                                          batch_size=batch_size,
+                                          shuffle=True,
+                                          num_workers=num_workers,
+                                          collate_fn=collate_fn,
+                                          pin_memory=True,
+                                          drop_last=False,
+                                          sampler=None)
 
-        self.validationloader = DataLoader(dataset=TextLoader([config.data.validation]),
-                                           batch_size=batch_size,
-                                           shuffle=True,
-                                           num_workers=num_workers,
-                                           collate_fn=collate_fn,
-                                           pin_memory=True,
-                                           drop_last=False,
-                                           sampler=None)
+            self.validationloader = DataLoader(dataset=TextLoader([config.data.validation]),
+                                               batch_size=batch_size,
+                                               shuffle=True,
+                                               num_workers=num_workers,
+                                               collate_fn=collate_fn,
+                                               pin_memory=True,
+                                               drop_last=False,
+                                               sampler=None)
 
-        self.testloader = None
+            self.testloader = None
+
+            self.train_accuracy = []
+            self.validation_accuracy = []
         # model.config
         self.tokenizer = AutoTokenizer.from_pretrained("skt/kobert-base-v1")
         model = DebertaV2ForSequenceClassification.from_pretrained("microsoft/deberta-v3-large")
@@ -107,9 +111,6 @@ class DebertaClassificationModel:
         # self.optimizer = create_xadam(self.model, config.train.epoch)
         self.optimizer = torch.optim.Adam(model.parameters(), lr=config.train.learning_rate)
         # torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
-
-        self.train_accuracy = []
-        self.validation_accuracy = []
 
     def inference(self, inputs):
         inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(device)

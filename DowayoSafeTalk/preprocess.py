@@ -4,8 +4,6 @@ from PyKomoran import *
 from datasets import tqdm
 from soynlp.normalizer import repeat_normalize
 
-spacing = Spacing()
-print('running test:', spacing('아 몬소리야 그건 또'))
 
 
 class PreProcessKomoran:
@@ -25,6 +23,8 @@ class PreProcessKomoran:
         #                  '∞': 'infinity', 'θ': 'theta', '÷': '/', 'α': 'alpha', '•': '.', 'à': 'a', '−': '-',
         #                  'β': 'beta', '∅': '', '³': '3', 'π': 'pi', }
 
+        self.spacing = Spacing()
+        print('pykospacing test:', self.spacing('아 몬소리야 그건 또'))
     # def clean(self, text, punct, mapping):
     #     for p in mapping:
     #         text = text.replace(p, mapping[p])
@@ -55,7 +55,7 @@ class PreProcessKomoran:
         text = text.replace('/', '')
 
         # print(text)
-        text = spacing(text)
+        text = self.spacing(text)
         text = repeat_normalize(text, num_repeats=2)
 
 
