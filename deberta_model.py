@@ -113,6 +113,16 @@ class DebertaClassificationModel:
         self.train_accuracy = []
         self.validation_accuracy = []
 
+    def inference(self, inputs):
+        inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(device)
+
+        with torch.no_grad():
+            logits = self.model(**inputs).logits
+
+        predicted_class_id = logits.argmax(dim=1)
+
+        return logits, predicted_class_id
+
     @staticmethod
     def weights_init(m):
         if isinstance(m, torch.nn.Linear):

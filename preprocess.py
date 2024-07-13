@@ -82,6 +82,36 @@ class PreProcessKomoran:
 
         return text
 
+    def filter_text(self, text):
+        def filter_sw(text):
+            split = text.split("/")
+
+            if len(split) == 1:
+                return '#' not in text
+
+            # return True
+            if len(split) > 2:
+                word = '/'.join(split[:-1])
+                wtype = split[-1]
+            else:
+                word, wtype = split
+
+            if wtype == 'NNP' or wtype == 'NNG':
+                return True
+
+            if wtype == 'VV' or wtype == 'VA':
+                return True
+
+            return False
+
+        text = self.clean_text(text)
+
+        res = self.komoran.get_plain_text(text).split(' ')
+
+        res = list(filter(filter_sw, res))  # 필터링
+        res = list(map(lambda x: x.split('/')[0], res))  # 대한민국/NNP 같은 단어가 있으면 슬래시 뒤 문자 떼버림
+
+        return res
 
     def get_tokens(self):
         all_texts = []
@@ -93,55 +123,18 @@ class PreProcessKomoran:
                 all_texts.append(line.strip())
 
         for text in tqdm(all_texts):
-            def filter_sw(text):
-                split = text.split("/")
-
-                if len(split) == 1:
-                    return '#' not in text
-
-                # return True
-                if len(split) > 2:
-                    word = '/'.join(split[:-1])
-                    wtype = split[-1]
-                else:
-                    word, wtype = split
-
-                if wtype == 'NNP' or wtype == 'NNG':
-                    return True
-
-                if wtype == 'VV' or wtype == 'VA':
-                    return True
-
-                return False
-
-            # def map_sw(text):
-            #     word, wtype = text.split('/')
-            #
-            #     if wtype[0] == 'V' and (wtype != 'VV' or wtype != 'VA'):
-            #         word = '다'
-
             orig = text
             # print(text)
             texts = text.split("|")
             if len(texts) >= 3:
-                text = f'{' '.join(texts[:-1])}|{texts[-1]}'  # | 이 여러개 들어가면 필터링
+                text = f'{' '.join(texts[:-1])}|{texts[-1]}'
+
             text, label = text.split("|")
-            text = self.clean_text(text)
+            res = self.filter_text(text)
 
-            # if len(text) < 2:
-            #     print("len", len(text), text, orig)
-            #     continue
-
-            res = self.komoran.get_plain_text(text).split(' ')
-
-            res = list(filter(filter_sw, res))  # 필터링
-            res = list(map(lambda x: x.split('/')[0], res))  # 대한민국/NNP 같은 단어가 있으면 슬래시 뒤 문자 떼버림
-            # print(text, res, len(res))
-
-            # if len(res) < 3:
-            #     print("list len", len(res), res, orig)
-            #     continue
-
+            if res is None:
+                continue
+            
             results.append((res, label))
 
             # time.sleep(1)
