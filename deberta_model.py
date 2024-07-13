@@ -112,7 +112,7 @@ class DebertaClassificationModel:
         # )
 
         # model.config.max_position_embeddings = 768
-        self.model = nn.DataParallel(DebertaV2ForSequenceClassification(deberta_config), device_ids=[0, 1]).to(device)
+        self.model = nn.DataParallel(DebertaV2ForSequenceClassification(deberta_config), device_ids=[0, 1])
         # summary(self.model, (4, 50))
         # self.model.apply(self.weights_init)
 
