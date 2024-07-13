@@ -19,7 +19,7 @@ def collate_fn(batch):
 
     for text, label in batch:
         data.append(text)
-        labels.append(label)
+        labels.append([1 if label == 0 else 0, 1 if label == 1 else 0])
 
     # print(len(data), len(labels))
     # print(labels)
@@ -104,6 +104,7 @@ class DebertaClassificationModel:
         # self.model.apply(self.weights_init)
 
         self.criterion = nn.CrossEntropyLoss()
+        self.softmax = nn.Softmax(dim=1)
 
 
         # self.optimizer = create_xadam(self.model, config.train.epoch)
@@ -146,7 +147,10 @@ class DebertaClassificationModel:
         # if torch.isnan(loss).any():
         #     raise Exception("loss has nan")
 
-        loss = self.criterion(logits, labels)
+        logits_with_softmax = self.softmax(logits)
+
+        loss = self.criterion(logits_with_softmax, labels)
+        print(logits_with_softmax, labels, loss.item())
         loss.backward()
 
         predicted_class_id = output.logits.argmax(dim=1)
