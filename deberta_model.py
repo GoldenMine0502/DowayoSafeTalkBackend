@@ -101,7 +101,7 @@ class DebertaClassificationModel:
 
         # model.config.max_position_embeddings = 768
         self.model = DebertaForSequenceClassification(model.config).to(device)
-        self.model.apply(self.weights_init)
+        # self.model.apply(self.weights_init)
 
         self.criterion = nn.CrossEntropyLoss()
 

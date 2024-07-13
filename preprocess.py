@@ -13,11 +13,12 @@ class PreProcessKomoran:
         # print(__version__)
         self.komoran = Komoran("EXP")  # OR EXP
         self.datasets = [
-            './dataset/data/korean_aihub1_result.txt',
-            './dataset/data/korean_selectstar_result.txt',
+            './dataset/data/smilegate.txt'
+            # './dataset/data/korean_aihub1_result.txt',
+            # './dataset/data/korean_selectstar_result.txt',
         ]
 
-        self.result_path = 'dataset/result_noclean.txt'
+        self.result_path = 'dataset/result_smilegate.txt'
         # self.punct = "/-'?!.,#$%\'()*+-/:;<=>@[\\]^_`{|}~" + '""“”’' + '∞θ÷α•à−β∅³π‘₹´°£€\\×™√²—–&'
         # self.punct_mapping = {"‘": "'", "₹": "e", "´": "'", "°": "", "€": "e", "™": "tm", "√": " sqrt ", "×": "x", "²": "2",
         #                  "—": "-", "–": "-", "’": "'", "_": "-", "`": "'", '”': '"', '“': '"', "£": "e",
@@ -54,8 +55,8 @@ class PreProcessKomoran:
         text = text.replace('/', '')
 
         # print(text)
-        # text = spacing(text)
-        # text = repeat_normalize(text, num_repeats=2)
+        text = spacing(text)
+        text = repeat_normalize(text, num_repeats=2)
 
 
         # 즵 즺 즫 즥 즷 즴 즨 즹 즬 즿 즼 즽 즻 즻 즾
@@ -122,12 +123,15 @@ class PreProcessKomoran:
 
             orig = text
             # print(text)
+            texts = text.split("|")
+            if len(texts) >= 3:
+                text = f'{' '.join(texts[:-1])}|{texts[-1]}'  # | 이 여러개 들어가면 필터링
             text, label = text.split("|")
             text = self.clean_text(text)
 
-            if len(text) < 5:
-                print("len", len(text), text, orig)
-                continue
+            # if len(text) < 2:
+            #     print("len", len(text), text, orig)
+            #     continue
 
             res = self.komoran.get_plain_text(text).split(' ')
 
@@ -135,9 +139,9 @@ class PreProcessKomoran:
             res = list(map(lambda x: x.split('/')[0], res))  # 대한민국/NNP 같은 단어가 있으면 슬래시 뒤 문자 떼버림
             # print(text, res, len(res))
 
-            if len(res) < 3:
-                print("list len", len(res), res, orig)
-                continue
+            # if len(res) < 3:
+            #     print("list len", len(res), res, orig)
+            #     continue
 
             results.append((res, label))
 
