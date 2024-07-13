@@ -162,13 +162,14 @@ class DebertaClassificationModel:
 
         labels = labels.to(device)
 
-        output = self.model(**inputs)
+        output = self.model(**inputs, labels=labels)
         logits = output.logits
+        loss = output.loss
 
 
-        logits_with_softmax = self.softmax(logits)
+        # logits_with_softmax = self.softmax(logits)
 
-        loss = self.criterion(logits, labels)
+        # loss = self.criterion(logits, labels)
 
         # print(logits, logits_with_softmax, labels, loss.item())
         if torch.isnan(loss).any():
