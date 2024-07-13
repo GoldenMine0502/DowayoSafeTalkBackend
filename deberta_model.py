@@ -83,9 +83,13 @@ class DebertaClassificationModel:
         # # self.model = DebertaForSequenceClassification(model.config).to(device)
         # # num_labels = len(model.config.id2label)
         #
-        model.config.num_labels = 2
+        # model.config.num_labels = 2
+        # model.config.hidden_dropout_prob = 0.01
+        # model.config.attention_probs_dropout_prob = 0.01
         # model.config.vocab_size = 100000
         # model.config.hidden_size = 1000
+
+        deberta_config = model.config
 
         # deberta_config = DebertaV2Config(
         #     vocab_size=128000,  # 한국어 대규모 데이터셋을 위한 적절한 vocab size
@@ -100,8 +104,15 @@ class DebertaClassificationModel:
         #     attention_probs_dropout_prob=0.1,
         # )
 
+        # deberta_config = DebertaV2Config(
+        #     type_vocab_size=1,
+        #     vocab_size=128100,
+        #     hidden_size=1536,
+        #     num_labels=2
+        # )
+
         # model.config.max_position_embeddings = 768
-        self.model = DebertaV2ForSequenceClassification(model.config).to(device)
+        self.model = DebertaV2ForSequenceClassification(deberta_config).to(device)
         # summary(self.model, (4, 50))
         # self.model.apply(self.weights_init)
 
@@ -110,7 +121,8 @@ class DebertaClassificationModel:
 
 
         # self.optimizer = create_xadam(self.model, config.train.epoch)
-        self.optimizer = torch.optim.Adam(model.parameters(), lr=config.train.learning_rate)
+        # self.optimizer = torch.optim.Adam(self.model.parameters(), lr=config.train.learning_rate)
+        self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=5e-5)
         # torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
 
         self.train_accuracy = []
@@ -153,7 +165,7 @@ class DebertaClassificationModel:
         logits_with_softmax = self.softmax(logits)
 
         loss = self.criterion(logits_with_softmax, labels)
-        # print(logits_with_softmax, labels, loss.item())
+        # print(logits, logits_with_softmax, labels, loss.item())
         loss.backward()
 
         predicted_class_id = output.logits.argmax(dim=1)
