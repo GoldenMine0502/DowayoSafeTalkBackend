@@ -73,8 +73,6 @@ class DebertaClassificationModel:
 
             self.testloader = None
 
-            self.train_accuracy = []
-            self.validation_accuracy = []
         # model.config
         self.tokenizer = AutoTokenizer.from_pretrained("skt/kobert-base-v1")
         model = DebertaV2ForSequenceClassification.from_pretrained("microsoft/deberta-v3-large")
@@ -111,6 +109,9 @@ class DebertaClassificationModel:
         # self.optimizer = create_xadam(self.model, config.train.epoch)
         self.optimizer = torch.optim.Adam(model.parameters(), lr=config.train.learning_rate)
         # torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
+
+        self.train_accuracy = []
+        self.validation_accuracy = []
 
     def inference(self, inputs):
         inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(device)
