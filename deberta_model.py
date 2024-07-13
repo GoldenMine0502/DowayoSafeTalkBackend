@@ -74,8 +74,8 @@ class DebertaClassificationModel:
 
         self.testloader = None
         # model.config
-        self.tokenizer = AutoTokenizer.from_pretrained("team-lucid/deberta-v3-base-korean")
-        model = DebertaV2ForSequenceClassification.from_pretrained("team-lucid/deberta-v3-base-korean")
+        self.tokenizer = AutoTokenizer.from_pretrained("team-lucid/deberta-v3-xlarge-korean")
+        model = DebertaV2ForSequenceClassification.from_pretrained("team-lucid/deberta-v3-xlarge-korean")
         # # model.config.max_position_embeddings = 1024
         # # del model.config.id2label[1]
         #
@@ -101,7 +101,7 @@ class DebertaClassificationModel:
 
         # model.config.max_position_embeddings = 768
         # self.model = DebertaV2ForSequenceClassification(model.config).to(device)
-        self.model = DebertaV2ForSequenceClassification.from_pretrained("team-lucid/deberta-v3-base-korean").to(device)
+        self.model = DebertaV2ForSequenceClassification.from_pretrained("team-lucid/deberta-v3-xlarge-korean").to(device)
         # self.model.apply(self.weights_init)
 
         self.criterion = nn.CrossEntropyLoss()
