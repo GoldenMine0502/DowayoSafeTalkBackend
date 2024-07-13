@@ -137,7 +137,7 @@ class DebertaClassificationModel:
 
     def train_one(self, inputs, labels):
         inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(device)
-        print(inputs['input_ids'].shape)
+        # print(inputs['input_ids'].shape)
         if torch.isnan(inputs['input_ids']).any():
             raise Exception("input value has nan")
 
