@@ -6,12 +6,14 @@ from django.http import JsonResponse, HttpResponse
 from rest_framework.decorators import api_view
 
 from DowayoSafeTalk.deberta_model import DebertaClassificationModel
+from DowayoSafeTalk.preprocess import PreProcessKomoran
 # from DowayoSafeTalk.preprocess import PreProcessKomoran
 from DowayoSafeTalk.yamlload import Config
 
 c = Config('DowayoSafeTalk/config/config.yml')
 deberta_inference = DebertaClassificationModel(c, only_inference=True)
 deberta_inference.load_weights(1)
+process = PreProcessKomoran(use_space=False)
 # checkpoint = torch.load(f'DowayoSafeTalk/deberta_{c.train.epoch}.pth', map_location=torch.device('cpu'))
 # print(checkpoint)
 # deberta_inference.model.load_state_dict(checkpoint['model_state_dict'])
@@ -31,8 +33,8 @@ def check(request):
                 'verify': 0,
             }
         )
-    # text = text_preprocess.filter_text(text)
-    # text = text.replace('/', '')
+    texts = process.filter_text(text)
+    text = ' '.join(texts)
 
     # print(text)
     logits, predicted_id = deberta_inference.inference(text)
