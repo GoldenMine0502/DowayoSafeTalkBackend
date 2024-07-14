@@ -11,12 +11,18 @@ class PreProcessKomoran:
         # print(__version__)
         self.komoran = Komoran("EXP")  # OR EXP
         self.datasets = [
-            './dataset/data/smilegate.txt'
-            # './dataset/data/korean_aihub1_result.txt',
-            # './dataset/data/korean_selectstar_result.txt',
+            './dataset/data/korean_aihub1_result.txt',
+            './dataset/data/korean_selectstar_result.txt',
+            './dataset/data/korean_2runo_result.txt',
+            './dataset/data/korean_smilegate_result.txt',
+            './dataset/data/korean_kmhas_result.txt',
+            './dataset/data/korean_kocohub_result.txt',
+            './dataset/data/korean_womad_result.txt',
+            './dataset/data/korean_zizun_result.txt',
+            './dataset/data/korean_lgbt_result.txt',
         ]
 
-        self.result_path = 'dataset/result_smilegate.txt'
+        self.result_path = 'dataset/result.txt'
         # self.punct = "/-'?!.,#$%\'()*+-/:;<=>@[\\]^_`{|}~" + '""“”’' + '∞θ÷α•à−β∅³π‘₹´°£€\\×™√²—–&'
         # self.punct_mapping = {"‘": "'", "₹": "e", "´": "'", "°": "", "€": "e", "™": "tm", "√": " sqrt ", "×": "x", "²": "2",
         #                  "—": "-", "–": "-", "’": "'", "_": "-", "`": "'", '”': '"', '“': '"', "£": "e",
