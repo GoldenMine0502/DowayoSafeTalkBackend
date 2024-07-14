@@ -337,7 +337,7 @@ class DebertaClassificationModel:
             self.validation_accuracy.append(self.validation())
 
             # torch.save(self.model, f'deberta_{i}.pt')
-            self.save_weights(epoch, self.train_accuracy[-1], self.validation_accuracy[-1])
+            self.save_weights(i, self.train_accuracy[-1], self.validation_accuracy[-1])
 
         self.show_plot(self.train_accuracy, self.validation_accuracy)
 
