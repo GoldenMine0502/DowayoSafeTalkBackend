@@ -337,7 +337,7 @@ class DebertaClassificationModel:
             self.validation_accuracy.append(self.validation())
 
             # torch.save(self.model, f'deberta_{i}.pt')
-            self.save_weights(i, self.train_accuracy[-1], self.validation_accuracy[-1])
+            self.save_weights(i)
 
         self.show_plot(self.train_accuracy, self.validation_accuracy)
 
@@ -349,16 +349,21 @@ class DebertaClassificationModel:
 
         self.model.load_state_dict(checkpoint['model_state_dict'])
         self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-        self.train_accuracy.append(checkpoint['train_accuracy'])
-        self.validation_accuracy.append(checkpoint['validation_accuracy'])
 
-    def save_weights(self, epoch, train_acc, validation_acc):
+        if type(checkpoint['train_accuracy']) == float:
+            self.train_accuracy.append(checkpoint['train_accuracy'])
+            self.validation_accuracy.append(checkpoint['validation_accuracy'])
+        else:
+            self.train_accuracy.extend(checkpoint['train_accuracy'])
+            self.validation_accuracy.extend(checkpoint['validation_accuracy'])
+
+    def save_weights(self, epoch):
         checkpoint = {
             'epoch': epoch,
             'model_state_dict': self.model.state_dict(),
             'optimizer_state_dict': self.optimizer.state_dict(),
-            'train_accuracy': train_acc,
-            'validation_accuracy': validation_acc
+            'train_accuracy': self.train_accuracy,
+            'validation_accuracy': self.validation_accuracy
         }
 
         os.makedirs('chkpt', exist_ok=True)
