@@ -1,5 +1,6 @@
 import json
 
+import numpy as np
 import torch
 from django.http import JsonResponse, HttpResponse
 from rest_framework.decorators import api_view
@@ -10,12 +11,12 @@ from DowayoSafeTalk.yamlload import Config
 
 c = Config('DowayoSafeTalk/config/config.yml')
 deberta_inference = DebertaClassificationModel(c, only_inference=True)
-checkpoint = torch.load(f'DowayoSafeTalk/deberta_{c.train.epoch}.pt', map_location=torch.device('cpu'))
+deberta_inference.load_weights(1)
+# checkpoint = torch.load(f'DowayoSafeTalk/deberta_{c.train.epoch}.pth', map_location=torch.device('cpu'))
 # print(checkpoint)
-deberta_inference.model.load_state_dict(checkpoint.state_dict())
-
-
+# deberta_inference.model.load_state_dict(checkpoint['model_state_dict'])
 # deberta_inference.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+
 
 # Create your views here.
 @api_view(['GET'])
@@ -33,16 +34,27 @@ def check(request):
     # text = text_preprocess.filter_text(text)
     # text = text.replace('/', '')
 
-    print(text)
+    # print(text)
     logits, predicted_id = deberta_inference.inference(text)
-    print(logits.shape, predicted_id.shape)
-    res1 = round(logits[0][0].detach().cpu().item(), 2)
-    res2 = round(logits[0][1].detach().cpu().item(), 2)
-    verify = predicted_id.detach().cpu().item()
+    # print(logits.shape, predicted_id.shape)
+    res1 = logits[0][0].detach().cpu().item()
+    res2 = logits[0][1].detach().cpu().item()
+    verify = predicted_id[0].detach().cpu().item()
+
+    def softmax(X):
+        exp_a = np.exp(X)
+        sum_exp_a = np.sum(exp_a)
+        y = exp_a / sum_exp_a
+
+        return y
+
+    softmaxs = softmax([res1, res2])
+    softmax1 = round(softmaxs[0] * 100, 2)
+    softmax2 = round(softmaxs[1] * 100, 2)
 
     response = {
-        'percent1': res1,
-        'percent2': res2,
+        'percent1': softmax1,
+        'percent2': softmax2,
         'verify': verify,
     }
 
