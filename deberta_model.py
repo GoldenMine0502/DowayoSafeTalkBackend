@@ -349,8 +349,8 @@ class DebertaClassificationModel:
 
         self.model.load_state_dict(checkpoint['model_state_dict'])
         self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-        self.train_accuracy.add(checkpoint['train_accuracy'])
-        self.validation_accuracy.add(checkpoint['validation_accuracy'])
+        self.train_accuracy.append(checkpoint['train_accuracy'])
+        self.validation_accuracy.append(checkpoint['validation_accuracy'])
 
     def save_weights(self, epoch, train_acc, validation_acc):
         checkpoint = {
