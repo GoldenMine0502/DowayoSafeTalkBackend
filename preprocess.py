@@ -7,7 +7,7 @@ from soynlp.normalizer import repeat_normalize
 
 
 class PreProcessKomoran:
-    def __init__(self):
+    def __init__(self, use_space=True):
         # print(__version__)
         self.komoran = Komoran("EXP")  # OR EXP
         self.datasets = [
@@ -23,8 +23,11 @@ class PreProcessKomoran:
         #                  '∞': 'infinity', 'θ': 'theta', '÷': '/', 'α': 'alpha', '•': '.', 'à': 'a', '−': '-',
         #                  'β': 'beta', '∅': '', '³': '3', 'π': 'pi', }
 
-        self.spacing = Spacing()
-        print('pykospacing test:', self.spacing('아 몬소리야 그건 또'))
+        self.use_space = use_space
+
+        if use_space:
+            self.spacing = Spacing()
+            print('pykospacing test:', self.spacing('아 몬소리야 그건 또'))
     # def clean(self, text, punct, mapping):
     #     for p in mapping:
     #         text = text.replace(p, mapping[p])
@@ -52,10 +55,11 @@ class PreProcessKomoran:
         # text = re.sub('[-=+,#/\?:^$.@*\"※~&%ㆍ!』\\‘|\(\)\[\]\<\>`\'…》]', '', string=text)
         # text = re.sub('\n', '.', string=text)
 
-        text = text.replace('/', '')
+        text = text.replace('/', ' ')
 
         # print(text)
-        text = self.spacing(text)
+        if self.use_space:
+            text = self.spacing(text)
         text = repeat_normalize(text, num_repeats=2)
 
 
