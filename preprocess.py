@@ -99,20 +99,20 @@ class PreProcessKomoran:
             if len(split) == 1:
                 return '#' not in text
 
-            # return True
-            if len(split) > 2:
-                word = '/'.join(split[:-1])
-                wtype = split[-1]
-            else:
-                word, wtype = split
-
-            if wtype == 'NNP' or wtype == 'NNG':
-                return True
-
-            if wtype == 'VV' or wtype == 'VA':
-                return True
-
-            return False
+            return True
+            # if len(split) > 2:
+            #     word = '/'.join(split[:-1])
+            #     wtype = split[-1]
+            # else:
+            #     word, wtype = split
+            #
+            # if wtype == 'NNP' or wtype == 'NNG':
+            #     return True
+            #
+            # if wtype == 'VV' or wtype == 'VA':
+            #     return True
+            #
+            # return False
 
         text = self.clean_text(text)
 
