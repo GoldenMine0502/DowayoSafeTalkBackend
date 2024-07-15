@@ -35,7 +35,7 @@ class DataSpliter:
         validations_small = []
 
         zeros_small = int(round(len(zeros) * small))
-        ones_small = int(round(len(ones) * small)) * 4
+        ones_small = int(round(len(ones) * small))
 
         # 비율에 맞게 넣기
         validations.extend(zeros[0:zero])
