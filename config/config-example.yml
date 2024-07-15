@@ -9,4 +9,4 @@ train:
   epoch: 30
   num_workers: 4
   learning_rate: 0.001
-  multi_gpu: True
+  gpu: 'cuda:1'

@@ -12,7 +12,6 @@ from transformers import AutoTokenizer, DebertaV2ForSequenceClassification, Debe
 
 from yamlload import Config
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
@@ -88,7 +87,7 @@ class DebertaClassificationModel:
         # # model.config.max_position_embeddings = 1024
         # # del model.config.id2label[1]
         #
-        # # self.model = DebertaForSequenceClassification(model.config).to(device)
+        # # self.model = DebertaForSequenceClassification(model.config).to(self.device)
         # # num_labels = len(model.config.id2label)
         #
         # model.config.num_labels = 2
@@ -127,7 +126,8 @@ class DebertaClassificationModel:
 
         # self.multi_gpu = config.train.multi_gpu
 
-        self.model.to(device)
+        self.device = config.train.gpu if torch.cuda.is_available() else "cpu"
+        self.model.to(self.device)
         # summary(self.model, (4, 50))
         # self.model.apply(self.weights_init)
 
@@ -148,7 +148,7 @@ class DebertaClassificationModel:
     def inference(self, inputs):
         self.model.eval()
 
-        inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(device)
+        inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(self.device)
 
         with torch.no_grad():
             logits = self.model(**inputs).logits
@@ -168,7 +168,7 @@ class DebertaClassificationModel:
         self.optimizer.zero_grad()
 
         # print(inputs)
-        inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(device)
+        inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(self.device)
 
         # [ 배치사이즈가 1일때(kobert) ]
         # {'input_ids': tensor([[517,   0, 517,   0, 517, 493,   0, 490,   0, 517, 490,   0, 517,   0,
@@ -237,7 +237,7 @@ class DebertaClassificationModel:
 
         # cudas = ["cuda:0", "cuda:1"]
 
-        labels = labels.to(device)
+        labels = labels.to(self.device)
 
         # output = self.model(input_ids=inputs['input_ids'], attention_mask=inputs['attention_mask'])
         output = self.model(**inputs)
@@ -266,9 +266,9 @@ class DebertaClassificationModel:
         return loss.item(), correct, len(labels)
 
     def vali_one(self, inputs, labels):
-        inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(device)
+        inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(self.device)
 
-        labels = labels.to(device)
+        labels = labels.to(self.device)
 
         with torch.no_grad():
             logits = self.model(**inputs).logits
