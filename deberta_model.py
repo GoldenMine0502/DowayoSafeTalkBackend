@@ -119,7 +119,7 @@ class DebertaClassificationModel:
         #     num_labels=2
         # )
 
-        # deberta_config.pad_token_id = 1
+        deberta_config.pad_token_id = 1
         # deberta_config.position_biased_input = False
 
         # model.config.max_position_embeddings = 768
@@ -239,7 +239,8 @@ class DebertaClassificationModel:
 
         labels = labels.to(device)
 
-        output = self.model(input_ids=inputs['input_ids'], attention_mask=inputs['attention_mask'])
+        # output = self.model(input_ids=inputs['input_ids'], attention_mask=inputs['attention_mask'])
+        output = self.model(**inputs)
         logits = output.logits
 
         # logits_with_softmax = self.softmax(logits)
