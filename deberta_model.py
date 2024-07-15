@@ -124,9 +124,8 @@ class DebertaClassificationModel:
 
         # model.config.max_position_embeddings = 768
         self.model = DebertaV2ForSequenceClassification(deberta_config)
-        if "cuda" in device:
-            print("cuda count:", torch.cuda.device_count())
-            self.model = nn.DataParallel(self.model)
+
+        # self.multi_gpu = config.train.multi_gpu
 
         self.model.to(device)
         # summary(self.model, (4, 50))
