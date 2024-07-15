@@ -145,6 +145,8 @@ class DebertaClassificationModel:
         self.train_accuracy = []
         self.validation_accuracy = []
 
+        del model
+
     def inference(self, inputs):
         self.model.eval()
 
