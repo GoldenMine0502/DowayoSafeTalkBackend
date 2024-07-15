@@ -13,7 +13,7 @@ from transformers import AutoTokenizer, DebertaV2ForSequenceClassification, Debe
 from yamlload import Config
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-os.environ["TOKENIZERS_PARALLELISM"] = "true"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
 def collate_fn(batch):
