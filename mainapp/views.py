@@ -12,7 +12,7 @@ from DowayoSafeTalk.yamlload import Config
 
 c = Config('DowayoSafeTalk/config/config.yml')
 deberta_inference = DebertaClassificationModel(c, only_inference=True)
-deberta_inference.load_weights(4)
+deberta_inference.load_weights(1)
 process = PreProcessKomoran(use_space=False)
 # checkpoint = torch.load(f'DowayoSafeTalk/deberta_{c.train.epoch}.pth', map_location=torch.device('cpu'))
 # print(checkpoint)
