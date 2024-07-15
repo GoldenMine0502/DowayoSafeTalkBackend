@@ -12,8 +12,8 @@ from transformers import AutoTokenizer, DebertaV2ForSequenceClassification, Debe
 
 from yamlload import Config
 
-device = "cuda:1" if torch.cuda.is_available() else "cpu"
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
+device = "cuda" if torch.cuda.is_available() else "cpu"
+os.environ["TOKENIZERS_PARALLELISM"] = "true"
 
 
 def collate_fn(batch):
@@ -124,9 +124,9 @@ class DebertaClassificationModel:
 
         # model.config.max_position_embeddings = 768
         self.model = DebertaV2ForSequenceClassification(deberta_config)
-        # if device == "cuda:0":
-        #     print(torch.cuda.device_count())
-        #     self.model = nn.DataParallel(self.model)
+        if "cuda" in device:
+            print("cuda count:", torch.cuda.device_count())
+            self.model = nn.DataParallel(self.model)
 
         self.model.to(device)
         # summary(self.model, (4, 50))
@@ -233,8 +233,8 @@ class DebertaClassificationModel:
 
         # print(inputs)
         # print(inputs['input_ids'].shape)
-        if torch.isnan(inputs['input_ids']).any():
-            raise Exception("input value has nan")
+        # if torch.isnan(inputs['input_ids']).any():
+        #     raise Exception("input value has nan")
 
         # cudas = ["cuda:0", "cuda:1"]
 
@@ -243,14 +243,13 @@ class DebertaClassificationModel:
         output = self.model(input_ids=inputs['input_ids'], attention_mask=inputs['attention_mask'])
         logits = output.logits
 
-
         # logits_with_softmax = self.softmax(logits)
 
         loss = self.criterion(logits, labels)
 
         # print(logits, logits_with_softmax, labels, loss.item())
-        if torch.isnan(loss).any():
-            raise Exception("loss has nan")
+        # if torch.isnan(loss).any():
+        #     raise Exception("loss has nan")
 
         loss.backward()
 
