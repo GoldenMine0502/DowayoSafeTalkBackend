@@ -332,6 +332,8 @@ class BalancedFocalLoss(nn.Module):
 
     def forward(self, inputs, targets):
         # BCE 손실 계산
+        print(inputs)
+        print(targets)
         bce_loss = F.binary_cross_entropy_with_logits(inputs, targets, weight=self.weight, reduction='none')
 
         # 확률 예측 값 계산
