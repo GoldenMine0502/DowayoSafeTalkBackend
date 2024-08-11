@@ -7,7 +7,7 @@ from soynlp.normalizer import repeat_normalize
 
 
 class PreProcessKomoran:
-    def __init__(self, use_space=True):
+    def __init__(self, use_space=False):
         # print(__version__)
         self.komoran = Komoran("EXP")  # OR EXP
         self.datasets = [
@@ -20,6 +20,7 @@ class PreProcessKomoran:
             './dataset/data/korean_womad_result.txt',
             './dataset/data/korean_zizun_result.txt',
             './dataset/data/korean_lgbt_result.txt',
+            './dataset/data/korean_nirw_result.txt',
         ]
 
         self.result_path = 'dataset/result.txt'
