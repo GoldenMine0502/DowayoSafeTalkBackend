@@ -11,7 +11,7 @@ class PreProcessKomoran:
         # print(__version__)
         self.komoran = Komoran("EXP")  # OR EXP
         self.datasets = [
-            './dataset/data/korean_aihub1_result.txt',
+            # './dataset/data/korean_aihub1_result.txt',
             './dataset/data/korean_selectstar_result.txt',
             './dataset/data/korean_2runo_result.txt',
             './dataset/data/korean_smilegate_result.txt',

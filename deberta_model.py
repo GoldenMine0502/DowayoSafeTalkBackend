@@ -66,7 +66,7 @@ class DebertaClassificationModel:
                                           shuffle=True,
                                           num_workers=num_workers,
                                           collate_fn=collate_fn,
-                                          # pin_memory=True,
+                                          pin_memory=True,
                                           drop_last=False,
                                           sampler=None)
 
@@ -75,7 +75,7 @@ class DebertaClassificationModel:
                                                shuffle=True,
                                                num_workers=num_workers,
                                                collate_fn=collate_fn,
-                                               # pin_memory=True,
+                                               pin_memory=True,
                                                drop_last=False,
                                                sampler=None)
 
