@@ -63,7 +63,7 @@ class DebertaClassificationModel:
         if not only_inference:
             self.trainloader = DataLoader(dataset=TextLoader([config.data.train]),
                                           batch_size=batch_size,
-                                          shuffle=True,
+                                          # shuffle=True,
                                           num_workers=num_workers,
                                           collate_fn=collate_fn,
                                           pin_memory=True,
