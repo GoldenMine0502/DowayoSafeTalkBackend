@@ -48,12 +48,12 @@ class DataConverterNirw:
         # print(lines)
         print(len(lines), len(lines_politics))
 
-        # 각분야에 대해 5만개만 추출
-        total_count = 50000
+        # 각분야에 대해 특정 개수만큼 추출
+        total_count = 500000
         random.shuffle(lines)
         random.shuffle(lines_politics)
 
-        lines = lines[:total_count]
+        lines = lines[:total_count*5]
         lines_politics = lines_politics[:total_count]
 
         with open(self.result_path, 'wt') as f:

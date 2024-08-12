@@ -16,7 +16,7 @@ class PreProcessKomoran:
             './dataset/data/korean_2runo_result.txt',
             './dataset/data/korean_smilegate_result.txt',
             './dataset/data/korean_kmhas_result.txt',
-            # './dataset/data/korean_kocohub_result.txt',
+            './dataset/data/korean_kocohub_result.txt',
             './dataset/data/korean_womad_result.txt',
             './dataset/data/korean_zizun_result.txt',
             './dataset/data/korean_lgbt_result.txt',
