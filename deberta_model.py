@@ -132,7 +132,7 @@ class DebertaClassificationModel:
         # self.model.apply(self.weights_init)
 
         # self.criterion = nn.CrossEntropyLoss()
-        self.criterion = BalancedFocalLoss(alpha=0.5, gamma=1.5, weight=torch.tensor([1.0, 2.5]).to(self.device))
+        self.criterion = BalancedFocalLoss(alpha=0.5, gamma=1.5, weight=torch.tensor([1.0, 1.0]).to(self.device))
         self.softmax = nn.Softmax(dim=1)
 
 
@@ -337,15 +337,15 @@ class BalancedFocalLoss(nn.Module):
         bce_loss = self.ce(inputs, targets)
 
         # 확률 예측 값 계산
-        # probs = torch.sigmoid(inputs)
+        probs = torch.sigmoid(inputs)
 
         # Focal Loss 구성 요소 계산
-        # pt = probs * targets + (1 - probs) * (1 - targets)  # pt = p (y=1일 때), 아니면 1-p
-        # focal_weight = (self.alpha * targets + (1 - self.alpha) * (1 - targets)) * ((1 - pt) ** self.gamma)
+        pt = probs * targets + (1 - probs) * (1 - targets)  # pt = p (y=1일 때), 아니면 1-p
+        focal_weight = (self.alpha * targets + (1 - self.alpha) * (1 - targets)) * ((1 - pt) ** self.gamma)
 
         # BCE와 Focal Loss 결합
-        # loss = focal_weight * bce_loss
-        loss = bce_loss
+        loss = focal_weight * bce_loss
+        # loss = bce_loss
 
         if self.reduction == 'mean':
             return loss.mean()
