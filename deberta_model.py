@@ -329,20 +329,23 @@ class BalancedFocalLoss(nn.Module):
         self.gamma = gamma
         self.weight = weight
         self.reduction = reduction
+        self.ce = nn.CrossEntropyLoss(weight=weight, reduction=reduction)
 
     def forward(self, inputs, targets):
         # BCE 손실 계산
-        bce_loss = F.binary_cross_entropy_with_logits(inputs, targets, weight=self.weight, reduction='none')
+        # bce_loss = F.binary_cross_entropy_with_logits(inputs, targets, weight=self.weight, reduction='none')
+        bce_loss = self.ce(inputs, targets)
 
         # 확률 예측 값 계산
-        probs = torch.sigmoid(inputs)
+        # probs = torch.sigmoid(inputs)
 
         # Focal Loss 구성 요소 계산
-        pt = probs * targets + (1 - probs) * (1 - targets)  # pt = p (y=1일 때), 아니면 1-p
-        focal_weight = (self.alpha * targets + (1 - self.alpha) * (1 - targets)) * ((1 - pt) ** self.gamma)
+        # pt = probs * targets + (1 - probs) * (1 - targets)  # pt = p (y=1일 때), 아니면 1-p
+        # focal_weight = (self.alpha * targets + (1 - self.alpha) * (1 - targets)) * ((1 - pt) ** self.gamma)
 
         # BCE와 Focal Loss 결합
-        loss = focal_weight * bce_loss
+        # loss = focal_weight * bce_loss
+        loss = bce_loss
 
         if self.reduction == 'mean':
             return loss.mean()
