@@ -10,7 +10,8 @@ class DataSpliter:
         self.validation_small = "dataset/validation_small.txt"
 
     def split_data(self):
-        maxlen = 200
+        maxlen = 250
+        minlen = 5
         ratio = 0.5
         all = 25000
 
@@ -26,6 +27,9 @@ class DataSpliter:
             text, label = line.split("|")
 
             if len(text) > maxlen:
+                continue
+
+            if len(text) < minlen:
                 continue
 
             if int(label) == 0:
