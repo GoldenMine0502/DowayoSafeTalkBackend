@@ -1,3 +1,4 @@
+import random
 import re
 from pathlib import Path
 
@@ -12,6 +13,8 @@ def extract_korean(text):
     korean_only = korean_pattern.sub('', text)
 
     return korean_only
+
+
 class DataConverterAihub1:
     def __init__(self):
         self.path = 'D:/datasets/한국어 음성/한국어_음성_분야'
@@ -25,14 +28,25 @@ class DataConverterAihub1:
 
         os = open(result_file, 'wt', encoding='utf-8')
 
+        texts = []
+
         for path in tqdm(all_files, ncols=60):
             with open(path, 'rt') as file:
                 text = file.read().strip().replace("  ", " ")
 
             text = extract_korean(text).strip(' ')
+
+            texts.append(text)
+
+        # 20만개만 사용
+        random.shuffle(texts)
+        texts = texts[0:200000]
+
+        for text in texts:
             os.write(f"{text}|0\n")
 
         os.close()
+
 
 if __name__ == '__main__':
     aihub1 = DataConverterAihub1()

@@ -11,12 +11,12 @@ class PreProcessKomoran:
         # print(__version__)
         self.komoran = Komoran("EXP")  # OR EXP
         self.datasets = [
-            # './dataset/data/korean_aihub1_result.txt',
+            './dataset/data/korean_aihub1_result.txt',
             './dataset/data/korean_selectstar_result.txt',
             './dataset/data/korean_2runo_result.txt',
             './dataset/data/korean_smilegate_result.txt',
             './dataset/data/korean_kmhas_result.txt',
-            './dataset/data/korean_kocohub_result.txt',
+            # './dataset/data/korean_kocohub_result.txt',
             './dataset/data/korean_womad_result.txt',
             './dataset/data/korean_zizun_result.txt',
             './dataset/data/korean_lgbt_result.txt',
@@ -67,7 +67,7 @@ class PreProcessKomoran:
         # print(text)
         if self.use_space:
             text = self.spacing(text)
-        text = repeat_normalize(text, num_repeats=2)
+        text = repeat_normalize(text, num_repeats=3)
 
 
         # 즵 즺 즫 즥 즷 즴 즨 즹 즬 즿 즼 즽 즻 즻 즾
