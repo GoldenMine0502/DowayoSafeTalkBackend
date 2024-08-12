@@ -8,7 +8,7 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 from torchsummary import summary
 from transformers import AutoTokenizer, DebertaV2ForSequenceClassification, DebertaV2Config, pipeline, \
-    DebertaForSequenceClassification
+    DebertaForSequenceClassification, RobertaForSequenceClassification
 import torch.nn.functional as F
 from yamlload import Config
 
@@ -83,7 +83,8 @@ class DebertaClassificationModel:
 
         # model.config skt/kobert-base-v1
         self.tokenizer = KoBERTTokenizer.from_pretrained("skt/kobert-base-v1")
-        model = DebertaV2ForSequenceClassification.from_pretrained("microsoft/deberta-v3-large")
+        # model = DebertaV2ForSequenceClassification.from_pretrained("microsoft/deberta-v3-large")
+        model = RobertaForSequenceClassification.from_pretrained("FacebookAI/roberta-base")
         # # model.config.max_position_embeddings = 1024
         # # del model.config.id2label[1]
         #
@@ -122,7 +123,7 @@ class DebertaClassificationModel:
         # deberta_config.position_biased_input = False
 
         # model.config.max_position_embeddings = 768
-        self.model = DebertaV2ForSequenceClassification(deberta_config)
+        self.model = RobertaForSequenceClassification(deberta_config)
 
         # self.multi_gpu = config.train.multi_gpu
 
