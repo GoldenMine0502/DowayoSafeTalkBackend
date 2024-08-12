@@ -84,7 +84,7 @@ class DebertaClassificationModel:
         # model.config skt/kobert-base-v1
         self.tokenizer = KoBERTTokenizer.from_pretrained("skt/kobert-base-v1")
         # model = DebertaV2ForSequenceClassification.from_pretrained("microsoft/deberta-v3-large")
-        model = RobertaForSequenceClassification.from_pretrained("FacebookAI/roberta-base")
+        model = RobertaForSequenceClassification.from_pretrained("FacebookAI/roberta-large")
         # # model.config.max_position_embeddings = 1024
         # # del model.config.id2label[1]
         #
