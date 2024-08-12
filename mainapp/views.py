@@ -33,10 +33,22 @@ def check(request):
                 'verify': 0,
             }
         )
+
+    def remove_chosung(text):
+        res = []
+
+        for ch in text:
+            if 'ㄱ' <= ch <= 'ㅎ':
+                continue
+            res.append(ch)
+
+        return ''.join(res)
+
     texts = process.filter_text(text)
     text = ' '.join(texts)
+    text = remove_chosung(text)
 
-    # print(text)
+    print(text)
     logits, predicted_id = deberta_inference.inference(text)
     # print(logits.shape, predicted_id.shape)
     res1 = logits[0][0].detach().cpu().item()
