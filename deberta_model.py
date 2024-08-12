@@ -265,7 +265,7 @@ class DebertaClassificationModel:
         self.train_accuracy.clear()
         self.validation_accuracy.clear()
 
-        checkpoint = torch.load(f'chkpt/deberta_{epoch}.pth', map_location=torch.device(device))
+        checkpoint = torch.load(f'chkpt/deberta_{epoch}.pth', map_location=torch.device(self.device))
 
         self.model.load_state_dict(checkpoint['model_state_dict'])
         self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
