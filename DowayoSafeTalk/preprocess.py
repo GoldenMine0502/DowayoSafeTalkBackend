@@ -7,16 +7,23 @@ from soynlp.normalizer import repeat_normalize
 
 
 class PreProcessKomoran:
-    def __init__(self, use_space=True):
+    def __init__(self, use_space=False):
         # print(__version__)
         self.komoran = Komoran("EXP")  # OR EXP
         self.datasets = [
-            './dataset/data/smilegate.txt'
-            # './dataset/data/korean_aihub1_result.txt',
-            # './dataset/data/korean_selectstar_result.txt',
+            './dataset/data/korean_aihub1_result.txt',
+            './dataset/data/korean_selectstar_result.txt',
+            './dataset/data/korean_2runo_result.txt',
+            './dataset/data/korean_smilegate_result.txt',
+            './dataset/data/korean_kmhas_result.txt',
+            # './dataset/data/korean_kocohub_result.txt',
+            './dataset/data/korean_womad_result.txt',
+            './dataset/data/korean_zizun_result.txt',
+            './dataset/data/korean_lgbt_result.txt',
+            './dataset/data/korean_nirw_result.txt',
         ]
 
-        self.result_path = 'dataset/result_smilegate.txt'
+        self.result_path = 'dataset/result.txt'
         # self.punct = "/-'?!.,#$%\'()*+-/:;<=>@[\\]^_`{|}~" + '""“”’' + '∞θ÷α•à−β∅³π‘₹´°£€\\×™√²—–&'
         # self.punct_mapping = {"‘": "'", "₹": "e", "´": "'", "°": "", "€": "e", "™": "tm", "√": " sqrt ", "×": "x", "²": "2",
         #                  "—": "-", "–": "-", "’": "'", "_": "-", "`": "'", '”': '"', '“': '"', "£": "e",
@@ -60,8 +67,7 @@ class PreProcessKomoran:
         # print(text)
         if self.use_space:
             text = self.spacing(text)
-        text = repeat_normalize(text, num_repeats=2)
-
+        text = repeat_normalize(text, num_repeats=3)
 
         # 즵 즺 즫 즥 즷 즴 즨 즹 즬 즿 즼 즽 즻 즻 즾
         text = (text.replace("#@이름#", "#")
@@ -93,20 +99,20 @@ class PreProcessKomoran:
             if len(split) == 1:
                 return '#' not in text
 
-            # return True
-            if len(split) > 2:
-                word = '/'.join(split[:-1])
-                wtype = split[-1]
-            else:
-                word, wtype = split
-
-            if wtype == 'NNP' or wtype == 'NNG':
-                return True
-
-            if wtype == 'VV' or wtype == 'VA':
-                return True
-
-            return False
+            return True
+            # if len(split) > 2:
+            #     word = '/'.join(split[:-1])
+            #     wtype = split[-1]
+            # else:
+            #     word, wtype = split
+            #
+            # if wtype == 'NNP' or wtype == 'NNG':
+            #     return True
+            #
+            # if wtype == 'VV' or wtype == 'VA':
+            #     return True
+            #
+            # return False
 
         text = self.clean_text(text)
 

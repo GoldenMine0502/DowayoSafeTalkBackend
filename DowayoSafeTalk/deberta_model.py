@@ -8,11 +8,10 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 from torchsummary import summary
 from transformers import AutoTokenizer, DebertaV2ForSequenceClassification, DebertaV2Config, pipeline, \
-    DebertaForSequenceClassification
-
+    DebertaForSequenceClassification, RobertaForSequenceClassification
+import torch.nn.functional as F
 from yamlload import Config
 
-device = "cuda:1" if torch.cuda.is_available() else "cpu"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
@@ -64,7 +63,7 @@ class DebertaClassificationModel:
         if not only_inference:
             self.trainloader = DataLoader(dataset=TextLoader([config.data.train]),
                                           batch_size=batch_size,
-                                          shuffle=True,
+                                          # shuffle=True,
                                           num_workers=num_workers,
                                           collate_fn=collate_fn,
                                           pin_memory=True,
@@ -84,11 +83,12 @@ class DebertaClassificationModel:
 
         # model.config skt/kobert-base-v1
         self.tokenizer = KoBERTTokenizer.from_pretrained("skt/kobert-base-v1")
-        model = DebertaV2ForSequenceClassification.from_pretrained("microsoft/deberta-v3-large")
+        # model = DebertaV2ForSequenceClassification.from_pretrained("microsoft/deberta-v3-large")
+        model = RobertaForSequenceClassification.from_pretrained("FacebookAI/roberta-large")
         # # model.config.max_position_embeddings = 1024
         # # del model.config.id2label[1]
         #
-        # # self.model = DebertaForSequenceClassification(model.config).to(device)
+        # # self.model = DebertaForSequenceClassification(model.config).to(self.device)
         # # num_labels = len(model.config.id2label)
         #
         # model.config.num_labels = 2
@@ -119,20 +119,21 @@ class DebertaClassificationModel:
         #     num_labels=2
         # )
 
-        # deberta_config.pad_token_id = 1
+        deberta_config.pad_token_id = 1
         # deberta_config.position_biased_input = False
 
         # model.config.max_position_embeddings = 768
-        self.model = DebertaV2ForSequenceClassification(deberta_config)
-        # if device == "cuda:0":
-        #     print(torch.cuda.device_count())
-        #     self.model = nn.DataParallel(self.model)
+        self.model = RobertaForSequenceClassification(deberta_config)
 
-        self.model.to(device)
+        # self.multi_gpu = config.train.multi_gpu
+
+        self.device = config.train.gpu if torch.cuda.is_available() else "cpu"
+        self.model.to(self.device)
         # summary(self.model, (4, 50))
         # self.model.apply(self.weights_init)
 
         self.criterion = nn.CrossEntropyLoss()
+        # self.criterion = BalancedFocalLoss(alpha=0.5, gamma=1.5, weight=torch.tensor([1.0, 1.0]).to(self.device))
         self.softmax = nn.Softmax(dim=1)
 
 
@@ -146,10 +147,12 @@ class DebertaClassificationModel:
         self.train_accuracy = []
         self.validation_accuracy = []
 
+        del model
+
     def inference(self, inputs):
         self.model.eval()
 
-        inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(device)
+        inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(self.device)
 
         with torch.no_grad():
             logits = self.model(**inputs).logits
@@ -165,125 +168,42 @@ class DebertaClassificationModel:
             if m.bias is not None:
                 torch.nn.init.zeros_(m.bias)
 
+    def count_correct_prediction(self, logits, labels):
+        predicted_class_id = logits.argmax(dim=1)
+
+        correct = 0
+        for predict, (zero, one) in zip(predicted_class_id, labels):
+            if predict == one:
+                correct += 1
+
+        return correct
+
     def train_one(self, inputs, labels):
         self.optimizer.zero_grad()
 
-        # print(inputs)
-        inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(device)
+        inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(self.device)
+        labels = labels.to(self.device)
 
-        # [ 배치사이즈가 1일때(kobert) ]
-        # {'input_ids': tensor([[517,   0, 517,   0, 517, 493,   0, 490,   0, 517, 490,   0, 517,   0,
-        #          517, 491, 494,   0, 517,   0, 517,   0, 517, 493,   0, 490,   0, 517,
-        #            0, 517, 493,   0, 493,   0, 517,   0, 517, 493,   0, 517,   0, 490,
-        #            0,   0,   0]]), 'token_type_ids': tensor([[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        #          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]]), 'attention_mask': tensor([[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        #          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]])}
+        output = self.model(**inputs).logits
+        loss = self.criterion(output, labels)
 
-        # [ 배치사이즈가 4일때(kobert) ]
-        # ['개소리 공정 말 정권 들 바뀌', '판결 이번 되 이상', '반미 어떻 하 사건 세월호 이용 대통령 되 나라', '암 주연 끌 상관없']
-        # {'input_ids': tensor([[  1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1, 517,
-        #          490,   0, 494, 517, 490,   0, 517,   0, 517,   0, 490,   0, 517,   0,
-        #          517,   0,   0,   0],
-        #         [  1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,
-        #            1,   1, 517,   0, 490,   0, 517, 491, 494,   0, 517,   0, 517, 491,
-        #          494,   0,   0,   0],
-        #         [517,   0, 494, 517, 491,   0, 517, 493,   0, 517,   0, 490,   0, 517,
-        #            0, 491,   0, 493,   0, 517, 491, 494, 491,   0, 517,   0, 517,   0,
-        #          517,   0,   0,   0],
-        #         [  1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,
-        #            1, 517, 491,   0, 517,   0, 491,   0, 517,   0, 517,   0, 490,   0,
-        #          491,   0,   0,   0]]), 'token_type_ids': tensor([[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        #          0, 0, 0, 0, 0, 0, 0, 2],
-        #         [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0,
-        #          0, 0, 0, 0, 0, 0, 0, 2],
-        #         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        #          0, 0, 0, 0, 0, 0, 0, 2],
-        #         [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        #          0, 0, 0, 0, 0, 0, 0, 2]]), 'attention_mask': tensor([[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        #          1, 1, 1, 1, 1, 1, 1, 1],
-        #         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
-        #          1, 1, 1, 1, 1, 1, 1, 1],
-        #         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        #          1, 1, 1, 1, 1, 1, 1, 1],
-        #         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        #          1, 1, 1, 1, 1, 1, 1, 1]])}
-
-        # 매핑 정보: kobert -> deberta
-        # 0 -> 2 (시퀀스 끝, 3)
-        # 0 ->
-        # 배치 사이즈가 4일때 (microsoft deberta tokenizer)
-        # {'input_ids': tensor([[     1,  96442, 106446,  97769, 122785,  68368,      2,      0,      0,
-        #               0,      0,      0,      0,      0,      0,      0,      0,      0,
-        #               0,      0],
-        #         [     1,    507, 122863, 123001,  60388,  37060,  96152,  39027,  80163,
-        #             507, 123272,  92388,    507,  67435, 114304,    507, 123947,  51223,
-        #           15048,      2],
-        #         [     1,    507, 123212,    507, 123212,    507, 122626,      2,      0,
-        #               0,      0,      0,      0,      0,      0,      0,      0,      0,
-        #               0,      0],
-        #         [     1,    507, 123154,  42812,  51139,  64010,    507, 123460,  98088,
-        #          122854,    507,      3, 113152,  73444,  98422,  52793, 105691,    507,
-        #               3,      2]]), 'token_type_ids': tensor([[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        #         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        #         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        #         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]), 'attention_mask': tensor([[1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        #         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        #         [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        #         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]])}
-
-        # print(inputs)
-        # print(inputs['input_ids'].shape)
-        if torch.isnan(inputs['input_ids']).any():
-            raise Exception("input value has nan")
-
-        # cudas = ["cuda:0", "cuda:1"]
-
-        labels = labels.to(device)
-
-        output = self.model(input_ids=inputs['input_ids'], attention_mask=inputs['attention_mask'])
-        logits = output.logits
-
-
-        # logits_with_softmax = self.softmax(logits)
-
-        loss = self.criterion(logits, labels)
-
-        # print(logits, logits_with_softmax, labels, loss.item())
-        if torch.isnan(loss).any():
-            raise Exception("loss has nan")
+        # if torch.isnan(loss).any():
+        #     raise Exception("loss has nan")
 
         loss.backward()
-
-        predicted_class_id = output.logits.argmax(dim=1)
-        # print(predicted_class_id)
-
-        correct = 0
-        for predict, (zero, one) in zip(predicted_class_id, labels):
-            if predict == one:
-                correct += 1
-
         self.optimizer.step()
 
-        return loss.item(), correct, len(labels)
+        return loss.item(), self.count_correct_prediction(output, labels), len(labels)
 
     def vali_one(self, inputs, labels):
-        inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(device)
+        inputs = self.tokenizer(inputs, return_tensors="pt", padding=True).to(self.device)
 
-        labels = labels.to(device)
+        labels = labels.to(self.device)
 
         with torch.no_grad():
-            logits = self.model(**inputs).logits
+            output = self.model(**inputs).logits
 
-        predicted_class_id = logits.argmax(dim=1)
-        # print(logits, predicted_class_id, labels)
-        # print(logits.shape, labels.shape)
-
-        correct = 0
-        for predict, (zero, one) in zip(predicted_class_id, labels):
-            if predict == one:
-                correct += 1
-
-        return correct, len(labels)
+        return self.count_correct_prediction(output, labels), len(labels)
 
     def train(self):
         self.model.train()
@@ -395,6 +315,45 @@ class DebertaClassificationModel:
 
         # 그래프 보여주기
         plt.show()
+
+
+class BalancedFocalLoss(nn.Module):
+    def __init__(self, alpha=0.25, gamma=2.0, weight=None, reduction='mean'):
+        """
+        :param alpha: 양성 클래스의 가중치 (보통 0.25에서 0.75 사이).
+        :param gamma: 초점 조정 매개변수 (보통 2.0).
+        :param weight: 클래스 균형을 위한 가중치, 텐서 형태 [2] (이진 분류의 경우).
+        :param reduction: 출력에 적용할 감소 방식: 'none' | 'mean' | 'sum'.
+        """
+        super(BalancedFocalLoss, self).__init__()
+        self.alpha = alpha
+        self.gamma = gamma
+        self.weight = weight
+        self.reduction = reduction
+        self.ce = nn.CrossEntropyLoss(weight=weight, reduction=reduction)
+
+    def forward(self, inputs, targets):
+        # BCE 손실 계산
+        # bce_loss = F.binary_cross_entropy_with_logits(inputs, targets, weight=self.weight, reduction='none')
+        bce_loss = self.ce(inputs, targets)
+
+        # 확률 예측 값 계산
+        # probs = torch.sigmoid(inputs)
+
+        # Focal Loss 구성 요소 계산
+        # pt = probs * targets + (1 - probs) * (1 - targets)  # pt = p (y=1일 때), 아니면 1-p
+        # focal_weight = (self.alpha * targets + (1 - self.alpha) * (1 - targets)) * ((1 - pt) ** self.gamma)
+
+        # BCE와 Focal Loss 결합
+        # loss = focal_weight * bce_loss
+        loss = bce_loss
+
+        if self.reduction == 'mean':
+            return loss.mean()
+        elif self.reduction == 'sum':
+            return loss.sum()
+        else:
+            return loss
 
 
 # 학습 안시키면 정확도 51%
