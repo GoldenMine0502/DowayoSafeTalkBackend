@@ -21,6 +21,7 @@ class PreProcessKomoran:
             './dataset/data/korean_zizun_result.txt',
             './dataset/data/korean_lgbt_result.txt',
             './dataset/data/korean_nirw_result.txt',
+            './dataset/data/raw_korean_badword.txt',
         ]
 
         self.result_path = 'dataset/result.txt'
@@ -132,6 +133,9 @@ class PreProcessKomoran:
         for dataset in self.datasets:
             for line in open(dataset):
                 all_texts.append(line.strip())
+
+        # print(all_texts[2756144])
+        # print(all_texts[2756145])
 
         for text in tqdm(all_texts):
             orig = text
