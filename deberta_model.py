@@ -173,8 +173,8 @@ class DebertaClassificationModel:
         predicted_class_id = logits.argmax(dim=1)
 
         correct = 0
-        for predict, (zero, one) in zip(predicted_class_id, labels):
-            if predict == one:
+        for predict, value in zip(predicted_class_id, labels):
+            if predict == value:
                 correct += 1
 
         return correct
