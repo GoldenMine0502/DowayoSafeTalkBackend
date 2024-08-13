@@ -319,7 +319,7 @@ class DebertaClassificationModel:
 
 
 class BalancedFocalLoss(nn.Module):
-    def __init__(self, alpha=0.25, gamma=2.0, weight=None, reduction='none'):
+    def __init__(self, alpha=0.25, gamma=2.0, weight=None, reduction='mean'):
         """
         :param alpha: 양성 클래스의 가중치 (보통 0.25에서 0.75 사이).
         :param gamma: 초점 조정 매개변수 (보통 2.0).
