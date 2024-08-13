@@ -134,7 +134,7 @@ class DebertaClassificationModel:
         # self.model.apply(self.weights_init)
 
         # self.criterion = nn.CrossEntropyLoss()
-        self.criterion = BalancedFocalLoss(alpha=0.25, gamma=2.0, weight=torch.tensor([1.0, 3.0]).to(self.device))
+        self.criterion = BalancedFocalLoss(alpha=torch.tensor([0.25, 0.75]).to(self.device), gamma=2.0, weight=torch.tensor([1.0, 3.0]).to(self.device))
         self.softmax = nn.Softmax(dim=1)
 
 
@@ -319,7 +319,7 @@ class DebertaClassificationModel:
 
 
 class BalancedFocalLoss(nn.Module):
-    def __init__(self, alpha=0.25, gamma=2.0, weight=None, reduction='mean'):
+    def __init__(self, alpha=None, gamma=2.0, weight=None, reduction='mean'):
         """
         :param alpha: 양성 클래스의 가중치 (보통 0.25에서 0.75 사이).
         :param gamma: 초점 조정 매개변수 (보통 2.0).
@@ -348,8 +348,12 @@ class BalancedFocalLoss(nn.Module):
         # 예측 확률 계산 (Softmax를 통해)
         pt = torch.exp(-ce_loss)
 
+        if self.alpha is not None:
+            alpha_t = self.alpha.gather(0, targets.view(-1))
+            ce_loss *= alpha_t
+
         # Focal Loss 계산
-        loss = self.alpha * (1 - pt) ** self.gamma * ce_loss
+        loss = (1 - pt) ** self.gamma * ce_loss
 
         # BCE와 Focal Loss 결합
         # loss = focal_weight * bce_loss

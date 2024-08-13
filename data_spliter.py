@@ -63,8 +63,8 @@ class DataSpliter:
         print(len(zeros), len(ones))
         print(len(trains), len(validations))
 
-        # trains.sort(key=len, reverse=True)
-        # validations.sort(key=len, reverse=True)
+        trains.sort(key=len, reverse=True)
+        validations.sort(key=len, reverse=True)
 
         with open(self.train, "wt") as file:
             for train in trains:
