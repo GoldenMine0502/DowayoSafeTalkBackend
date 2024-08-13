@@ -331,7 +331,7 @@ class BalancedFocalLoss(nn.Module):
         self.gamma = gamma
         self.weight = weight
         self.reduction = reduction
-        self.ce = nn.CrossEntropyLoss(weight=weight, reduction=reduction)
+        self.ce = nn.CrossEntropyLoss(weight=weight, reduction='none')
 
     def forward(self, inputs, targets):
         # BCE 손실 계산
