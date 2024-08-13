@@ -171,7 +171,7 @@ class DebertaClassificationModel:
 
     def count_correct_prediction(self, logits, labels):
         predicted_class_id = logits.argmax(dim=1)
-
+        print(logits.shape, labels.shape)
         correct = 0
         for predict, value in zip(predicted_class_id, labels):
             if predict == value:
