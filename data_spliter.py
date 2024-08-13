@@ -1,5 +1,7 @@
 import random
 
+from datasets import tqdm
+
 
 class DataSpliter:
     def __init__(self):
@@ -9,9 +11,18 @@ class DataSpliter:
         self.validation = "dataset/validation.txt"
         self.validation_small = "dataset/validation_small.txt"
 
+    def distinct(self, lst):
+        seen = set()
+        result = []
+        for item in tqdm(lst, ncols=80):
+            if item not in seen:
+                seen.add(item)
+                result.append(item)
+        return result
+
     def split_data(self):
         maxlen = 250
-        minlen = 5
+        minlen = 0  # 단순 한글자 욕설 떄문에 냅둠
         ratio = 0.5
         all = 25000
 
@@ -36,6 +47,9 @@ class DataSpliter:
                 zeros.append(line)
             else:
                 ones.append(line)
+
+        zeros = self.distinct(zeros)
+        ones = self.distinct(ones)
 
         random.shuffle(zeros)
         random.shuffle(ones)
