@@ -32,7 +32,7 @@ def collate_fn(batch):
     # print(len(data), len(labels))
     # print(labels)
 
-    return data, torch.tensor(labels, dtype=torch.int64)
+    return data, torch.tensor(labels)
 
 
 class TextLoader(Dataset):
@@ -349,7 +349,7 @@ class BalancedFocalLoss(nn.Module):
         pt = torch.exp(-ce_loss)
 
         if self.alpha is not None:
-            alpha_t = self.alpha.gather(0, targets.view(-1))
+            alpha_t = self.alpha[targets[1].int()]
             ce_loss *= alpha_t
 
         # Focal Loss 계산
