@@ -23,7 +23,7 @@ def collate_fn(batch):
 
     for text, label in batch:
         data.append(text)
-        labels.append([1.0 if label == 0 else 0.0, 1.0 if label == 1 else 0.0])
+        labels.append(label)
         # max_len = max(max_len, len(text))
 
     # data_pad = []
@@ -349,7 +349,8 @@ class BalancedFocalLoss(nn.Module):
         pt = torch.exp(-ce_loss)
 
         if self.alpha is not None:
-            ce_loss *= self.alpha.gather(0, targets[:, 1])
+            # ce_loss *= self.alpha.gather(0, targets[:, 1])
+            ce_loss *= self.alpha.gather(0, targets)
 
         # Focal Loss 계산
         loss = (1 - pt) ** self.gamma * ce_loss
