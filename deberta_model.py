@@ -134,7 +134,7 @@ class DebertaClassificationModel:
         # self.model.apply(self.weights_init)
 
         # self.criterion = nn.CrossEntropyLoss()
-        self.criterion = BalancedFocalLoss(alpha=0.5, gamma=1.5, weight=torch.tensor([1.0, 3.0]).to(self.device))
+        self.criterion = BalancedFocalLoss(alpha=0.25, gamma=2.0, weight=torch.tensor([1.0, 3.0]).to(self.device))
         self.softmax = nn.Softmax(dim=1)
 
 
