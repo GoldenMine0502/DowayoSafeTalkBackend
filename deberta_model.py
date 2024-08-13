@@ -349,7 +349,7 @@ class BalancedFocalLoss(nn.Module):
         pt = torch.exp(-ce_loss)
 
         if self.alpha is not None:
-            ce_loss *= self.alpha.gather(0, targets[:, 1].int())
+            ce_loss *= self.alpha.gather(0, targets[:, 1])
 
         # Focal Loss 계산
         loss = (1 - pt) ** self.gamma * ce_loss
