@@ -39,7 +39,7 @@ class DataConverterNirw:
                 for doc in jsondoc['document']:
                     topic = doc['metadata']['topic']
 
-                    texts = map(lambda x: x['form'], doc['paragraph'])
+                    texts = map(lambda x: x['form'].replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' '), doc['paragraph'])
 
                     if topic == '정치':
                         lines_politics.extend(texts)
@@ -48,19 +48,23 @@ class DataConverterNirw:
         # print(lines)
         print(len(lines), len(lines_politics))
 
-        # 각분야에 대해 5만개만 추출
-        total_count = 50000
+        # 각분야에 대해 특정 개수만큼 추출
+        total_count = 250_0000
+        total_count_politics = 50_0000
         random.shuffle(lines)
         random.shuffle(lines_politics)
 
         lines = lines[:total_count]
-        lines_politics = lines_politics[:total_count]
+        lines_politics = lines_politics[:total_count_politics]
 
         with open(self.result_path, 'wt') as f:
             for line in tqdm(lines):
                 f.write('{}|{}\n'.format(line, 0))
             for line in tqdm(lines_politics):
                 f.write('{}|{}\n'.format(line, 0))
+
+        with open(self.result_path, 'rt') as f:
+            assert len(f.readlines()) == total_count + total_count_politics
 
 
 if __name__ == '__main__':

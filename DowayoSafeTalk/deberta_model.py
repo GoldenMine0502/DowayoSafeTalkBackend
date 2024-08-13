@@ -23,7 +23,7 @@ def collate_fn(batch):
 
     for text, label in batch:
         data.append(text)
-        labels.append([1.0 if label == 0 else 0.0, 1.0 if label == 1 else 0.0])
+        labels.append(label)
         # max_len = max(max_len, len(text))
 
     # data_pad = []
@@ -63,7 +63,7 @@ class DebertaClassificationModel:
         if not only_inference:
             self.trainloader = DataLoader(dataset=TextLoader([config.data.train]),
                                           batch_size=batch_size,
-                                          # shuffle=True,
+                                          shuffle=config.train.shuffle,
                                           num_workers=num_workers,
                                           collate_fn=collate_fn,
                                           pin_memory=True,
@@ -84,8 +84,8 @@ class DebertaClassificationModel:
         # model.config skt/kobert-base-v1
         self.tokenizer = KoBERTTokenizer.from_pretrained("skt/kobert-base-v1")
         # model = DebertaV2ForSequenceClassification.from_pretrained("microsoft/deberta-v3-large")
-        model = RobertaForSequenceClassification.from_pretrained("FacebookAI/roberta-base")
-        # model = RobertaForSequenceClassification.from_pretrained("FacebookAI/roberta-large")
+        # model = RobertaForSequenceClassification.from_pretrained("FacebookAI/roberta-base")
+        model = RobertaForSequenceClassification.from_pretrained("FacebookAI/roberta-large")
         # # model.config.max_position_embeddings = 1024
         # # del model.config.id2label[1]
         #
@@ -133,8 +133,8 @@ class DebertaClassificationModel:
         # summary(self.model, (4, 50))
         # self.model.apply(self.weights_init)
 
-        self.criterion = nn.CrossEntropyLoss()
-        # self.criterion = BalancedFocalLoss(alpha=0.5, gamma=1.5, weight=torch.tensor([1.0, 1.0]).to(self.device))
+        # self.criterion = nn.CrossEntropyLoss()
+        self.criterion = BalancedFocalLoss(alpha=torch.tensor([0.25, 0.75]).to(self.device), gamma=2.0, weight=torch.tensor([1.0, 3.0]).to(self.device))
         self.softmax = nn.Softmax(dim=1)
 
 
@@ -171,10 +171,10 @@ class DebertaClassificationModel:
 
     def count_correct_prediction(self, logits, labels):
         predicted_class_id = logits.argmax(dim=1)
-
+        # print(logits.shape, labels.shape)
         correct = 0
-        for predict, (zero, one) in zip(predicted_class_id, labels):
-            if predict == one:
+        for predict, value in zip(predicted_class_id, labels):
+            if predict == value:
                 correct += 1
 
         return correct
@@ -319,7 +319,7 @@ class DebertaClassificationModel:
 
 
 class BalancedFocalLoss(nn.Module):
-    def __init__(self, alpha=0.25, gamma=2.0, weight=None, reduction='mean'):
+    def __init__(self, alpha=None, gamma=2.0, weight=None, reduction='mean'):
         """
         :param alpha: 양성 클래스의 가중치 (보통 0.25에서 0.75 사이).
         :param gamma: 초점 조정 매개변수 (보통 2.0).
@@ -331,23 +331,33 @@ class BalancedFocalLoss(nn.Module):
         self.gamma = gamma
         self.weight = weight
         self.reduction = reduction
-        self.ce = nn.CrossEntropyLoss(weight=weight, reduction=reduction)
+        self.ce = nn.CrossEntropyLoss(weight=weight, reduction='none')
 
     def forward(self, inputs, targets):
         # BCE 손실 계산
         # bce_loss = F.binary_cross_entropy_with_logits(inputs, targets, weight=self.weight, reduction='none')
-        bce_loss = self.ce(inputs, targets)
+        ce_loss = self.ce(inputs, targets)
 
-        # 확률 예측 값 계산
+        # # 확률 예측 값 계산
         # probs = torch.sigmoid(inputs)
-
-        # Focal Loss 구성 요소 계산
+        #
+        # # Focal Loss 구성 요소 계산
         # pt = probs * targets + (1 - probs) * (1 - targets)  # pt = p (y=1일 때), 아니면 1-p
         # focal_weight = (self.alpha * targets + (1 - self.alpha) * (1 - targets)) * ((1 - pt) ** self.gamma)
 
+        # 예측 확률 계산 (Softmax를 통해)
+        pt = torch.exp(-ce_loss)
+
+        if self.alpha is not None:
+            # ce_loss *= self.alpha.gather(0, targets[:, 1])
+            ce_loss *= self.alpha.gather(0, targets)
+
+        # Focal Loss 계산
+        loss = (1 - pt) ** self.gamma * ce_loss
+
         # BCE와 Focal Loss 결합
         # loss = focal_weight * bce_loss
-        loss = bce_loss
+        # loss = bce_loss
 
         if self.reduction == 'mean':
             return loss.mean()
