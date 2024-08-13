@@ -32,7 +32,7 @@ def collate_fn(batch):
     # print(len(data), len(labels))
     # print(labels)
 
-    return data, torch.tensor(labels)
+    return data, torch.tensor(labels, dtype=torch.int64)
 
 
 class TextLoader(Dataset):
