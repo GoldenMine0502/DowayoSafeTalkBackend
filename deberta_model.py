@@ -139,7 +139,7 @@ class DebertaClassificationModel:
 
         # self.optimizer = create_xadam(self.model, config.train.epoch)
         # self.optimizer = torch.optim.Adam(self.model.parameters(), lr=config.train.learning_rate)
-        self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=config.train.learning_rate)
+        self.optimizer = torch.optim.AdamW(model_with_config.parameters(), lr=config.train.learning_rate)
         # torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
 
         # self.pipe = pipeline(tokenizer=self.tokenizer, model=self.model, device=device)
