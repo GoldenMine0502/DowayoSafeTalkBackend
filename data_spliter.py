@@ -24,7 +24,7 @@ class DataSpliter:
         maxlen = 250
         minlen = 0  # 단순 한글자 욕설 떄문에 냅둠
         ratio = 0.5
-        all = 25000
+        all = 15000
 
         small = 0.25
 

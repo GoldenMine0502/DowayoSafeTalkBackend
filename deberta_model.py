@@ -11,6 +11,7 @@ from transformers import AutoTokenizer, DebertaV2ForSequenceClassification, Debe
     DebertaForSequenceClassification, RobertaForSequenceClassification
 import torch.nn.functional as F
 from yamlload import Config
+import torch.nn.parallel.DistributedDataParallel as DDP
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -124,7 +125,21 @@ class DebertaClassificationModel:
         # deberta_config.position_biased_input = False
 
         # model.config.max_position_embeddings = 768
-        self.model = RobertaForSequenceClassification(deberta_config)
+
+        global args
+
+        args.gpu = 0
+        args.world_size = 1
+
+        args.gpu = args.local_rank
+        torch.cuda.set_device(args.gpu)
+        torch.distributed.init_process_group(backend='nccl',
+                                             init_method='env://')
+        args.world_size = torch.distributed.get_world_size()
+
+        model_with_config = RobertaForSequenceClassification(deberta_config)
+        model_with_config.cuda(args.gpu)
+        self.model = DDP(model_with_config, delay_allreduce=True)
 
         # self.multi_gpu = config.train.multi_gpu
 
@@ -377,5 +392,3 @@ if __name__ == "__main__":
         start_epoch=c.train.start_epoch
     )
 
-# pip3 freeze > requirements.txt
-# pip install -r requirements.txt

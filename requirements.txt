@@ -24,6 +24,7 @@ Jinja2==3.1.4
 joblib==1.4.2
 keras==3.4.1
 kiwisolver==1.4.5
+kobert-tokenizer @ git+https://github.com/SKTBrain/KoBERT.git@47a69af87928fc24e20f571fe10c3cc9dd9af9a3#subdirectory=kobert_hf
 libclang==18.1.1
 Markdown==3.6
 markdown-it-py==3.0.0
@@ -60,6 +61,7 @@ rich==13.7.1
 safetensors==0.4.3
 scikit-learn==1.5.1
 scipy==1.14.0
+sentencepiece==0.2.0
 setuptools==70.3.0
 six==1.16.0
 soynlp==0.0.493
@@ -72,6 +74,7 @@ threadpoolctl==3.5.0
 tokenizers==0.19.1
 torch==2.3.1
 torch-summary==1.4.5
+torchsummary==1.5.1
 tqdm==4.66.4
 transformers==4.42.3
 typing_extensions==4.12.2
