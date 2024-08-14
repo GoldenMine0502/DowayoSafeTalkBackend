@@ -136,6 +136,7 @@ class DebertaClassificationModel:
         # args.gpu = args.local_rank
 
         model_with_config = RobertaForSequenceClassification(deberta_config)
+        model_with_config.cuda()
 
         # self.optimizer = create_xadam(self.model, config.train.epoch)
         # self.optimizer = torch.optim.Adam(self.model.parameters(), lr=config.train.learning_rate)
