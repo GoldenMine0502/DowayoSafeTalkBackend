@@ -24,7 +24,6 @@ Jinja2==3.1.4
 joblib==1.4.2
 keras==3.4.1
 kiwisolver==1.4.5
-kobert-tokenizer @ git+https://github.com/SKTBrain/KoBERT.git@47a69af87928fc24e20f571fe10c3cc9dd9af9a3#subdirectory=kobert_hf
 libclang==18.1.1
 Markdown==3.6
 markdown-it-py==3.0.0
