@@ -2,6 +2,7 @@ import argparse
 import os
 
 import torch
+from apex import amp
 from datasets import tqdm
 from kobert_tokenizer import KoBERTTokenizer
 from matplotlib import pyplot as plt
@@ -136,6 +137,15 @@ class DebertaClassificationModel:
 
         model_with_config = RobertaForSequenceClassification(deberta_config)
 
+        # self.optimizer = create_xadam(self.model, config.train.epoch)
+        # self.optimizer = torch.optim.Adam(self.model.parameters(), lr=config.train.learning_rate)
+        self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=config.train.learning_rate)
+        # torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
+
+        # self.pipe = pipeline(tokenizer=self.tokenizer, model=self.model, device=device)
+
+        model_with_config, self.optimizer = amp.initialize(model_with_config, self.optimizer, opt_level="O1")
+
         if distributed:
             print(f'gpu: {gpu}')
             torch.cuda.set_device(gpu)
@@ -163,14 +173,6 @@ class DebertaClassificationModel:
         # self.criterion = nn.CrossEntropyLoss()
         self.criterion = BalancedFocalLoss(alpha=torch.tensor([0.25, 0.75]).to(self.device), gamma=2.0, weight=torch.tensor([1.0, 3.0]).to(self.device))
         self.softmax = nn.Softmax(dim=1)
-
-
-        # self.optimizer = create_xadam(self.model, config.train.epoch)
-        # self.optimizer = torch.optim.Adam(self.model.parameters(), lr=config.train.learning_rate)
-        self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=config.train.learning_rate)
-        # torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
-
-        # self.pipe = pipeline(tokenizer=self.tokenizer, model=self.model, device=device)
 
         self.train_accuracy = []
         self.validation_accuracy = []
@@ -217,8 +219,9 @@ class DebertaClassificationModel:
 
         # if torch.isnan(loss).any():
         #     raise Exception("loss has nan")
+        with amp.scale_loss(loss, self.optimizer) as scaled_loss:
+            scaled_loss.backward()
 
-        loss.backward()
         self.optimizer.step()
 
         return loss.item(), self.count_correct_prediction(output, labels), len(labels)
