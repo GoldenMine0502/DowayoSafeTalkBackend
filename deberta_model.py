@@ -137,6 +137,7 @@ class DebertaClassificationModel:
         model_with_config = RobertaForSequenceClassification(deberta_config)
 
         if distributed:
+            print(f'gpu: {gpu}')
             torch.cuda.set_device(gpu)
             torch.distributed.init_process_group(backend='nccl',
                                                  init_method='env://')
@@ -397,7 +398,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     # FOR DISTRIBUTED:  Parse for the local_rank argument, which will be supplied
     # automatically by torch.distributed.launch.
-    parser.add_argument("--local_rank", default=0, type=int)
+    parser.add_argument("--local_rank", default=os.getenv('LOCAL_RANK', 0), type=int)
     args = parser.parse_args()
 
     args.distributed = False
