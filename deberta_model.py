@@ -11,7 +11,7 @@ from transformers import AutoTokenizer, DebertaV2ForSequenceClassification, Debe
     DebertaForSequenceClassification, RobertaForSequenceClassification
 import torch.nn.functional as F
 from yamlload import Config
-import torch.nn.parallel.DistributedDataParallel as DDP
+from torch.nn.parallel import DistributedDataParallel as DDP
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 

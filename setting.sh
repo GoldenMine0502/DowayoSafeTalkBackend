@@ -1,4 +1,4 @@
-echo "you need to do 'apt install python3-packaging"
+echo "you need to do 'apt install python3-packaging'"
 # pip3 freeze > requirements.txt
 # pip install -r requirements.txt
 
