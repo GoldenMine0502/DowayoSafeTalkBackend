@@ -126,19 +126,21 @@ class DebertaClassificationModel:
 
         # model.config.max_position_embeddings = 768
 
-        global args
+        # global args
 
-        args.gpu = 0
-        args.world_size = 1
+        # args.gpu = 0
+        # args.world_size = 1
 
-        args.gpu = args.local_rank
-        torch.cuda.set_device(args.gpu)
+        # args.gpu = args.local_rank
+        gpu = config.parallel.gpu_devices
+
+        torch.cuda.set_device(gpu)
         torch.distributed.init_process_group(backend='nccl',
                                              init_method='env://')
-        args.world_size = torch.distributed.get_world_size()
+        # world_size = torch.distributed.get_world_size()
 
         model_with_config = RobertaForSequenceClassification(deberta_config)
-        model_with_config.cuda(args.gpu)
+        model_with_config.cuda(gpu)
         self.model = DDP(model_with_config, delay_allreduce=True)
 
         # self.multi_gpu = config.train.multi_gpu

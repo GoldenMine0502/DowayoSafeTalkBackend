@@ -12,3 +12,6 @@ train:
   gpu: 'cuda'
   ai_name: 'example'
   shuffle: True
+
+parallel:
+  gpu_devices: 0 1
