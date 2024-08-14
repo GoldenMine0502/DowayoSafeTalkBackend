@@ -1,3 +1,4 @@
+import argparse
 import os
 
 import torch
@@ -57,7 +58,7 @@ class TextLoader(Dataset):
 
 
 class DebertaClassificationModel:
-    def __init__(self, config, only_inference=False):
+    def __init__(self, config, only_inference=False, distributed=False, gpu=0):
         batch_size = config.train.batch_size
         num_workers = config.train.num_workers
 
@@ -132,16 +133,21 @@ class DebertaClassificationModel:
         # args.world_size = 1
 
         # args.gpu = args.local_rank
-        gpu = config.parallel.gpu_devices
-
-        torch.cuda.set_device(gpu)
-        torch.distributed.init_process_group(backend='nccl',
-                                             init_method='env://')
-        # world_size = torch.distributed.get_world_size()
 
         model_with_config = RobertaForSequenceClassification(deberta_config)
-        model_with_config.cuda(gpu)
-        self.model = DDP(model_with_config, delay_allreduce=True)
+
+        if distributed:
+            torch.cuda.set_device(gpu)
+            torch.distributed.init_process_group(backend='nccl',
+                                                 init_method='env://')
+            # world_size = torch.distributed.get_world_size()
+
+            model_with_config.cuda(gpu)
+            self.model = DDP(model_with_config, delay_allreduce=True)
+        else:
+            self.model = model_with_config
+            self.model.to(config.train.gpu)
+
 
         # self.multi_gpu = config.train.multi_gpu
 
@@ -388,7 +394,21 @@ class BalancedFocalLoss(nn.Module):
 if __name__ == "__main__":
     c = Config('config/config.yml')
 
-    trainer = DebertaClassificationModel(c)
+    parser = argparse.ArgumentParser()
+    # FOR DISTRIBUTED:  Parse for the local_rank argument, which will be supplied
+    # automatically by torch.distributed.launch.
+    parser.add_argument("--local_rank", default=0, type=int)
+    args = parser.parse_args()
+
+    args.distributed = False
+    if 'WORLD_SIZE' in os.environ:
+        args.distributed = int(os.environ['WORLD_SIZE']) > 1
+
+    trainer = DebertaClassificationModel(
+        c,
+        distributed=args.distributed,
+        gpu=args.local_rank,
+    )
     trainer.process(
         epoch=c.train.epoch,
         start_epoch=c.train.start_epoch
