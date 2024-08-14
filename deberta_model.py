@@ -58,7 +58,7 @@ class TextLoader(Dataset):
 
 
 class DebertaClassificationModel:
-    def __init__(self, config, only_inference=False, distributed=False, gpu=0):
+    def __init__(self, config, only_inference=False, distributed=False, gpu=None):
         batch_size = config.train.batch_size
         num_workers = config.train.num_workers
 
@@ -398,9 +398,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     # FOR DISTRIBUTED:  Parse for the local_rank argument, which will be supplied
     # automatically by torch.distributed.launch.
-    parser.add_argument("--local_rank", default=os.getenv('LOCAL_RANK', 0), type=int)
+    # parser.add_argument("--local_rank", default=os.getenv('LOCAL_RANK', 0), type=int)
     args = parser.parse_args()
 
+    args.local_rank = os.environ['LOCAL_RANK']
     args.distributed = False
     if 'WORLD_SIZE' in os.environ:
         args.distributed = int(os.environ['WORLD_SIZE']) > 1
