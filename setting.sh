@@ -1,3 +1,4 @@
+echo "you need to do 'apt install python3-packaging"
 # pip3 freeze > requirements.txt
 # pip install -r requirements.txt
 
@@ -12,6 +13,8 @@ pip install 'git+https://github.com/SKTBrain/KoBERT.git#egg=kobert_tokenizer&sub
 cp config/config-example.yml config/config.yml
 
 # install apex
+pip install cupy-cuda12x
+pip install packaging
 git clone https://github.com/NVIDIA/apex
 cd apex || exit
 # if pip >= 23.1 (ref: https://pip.pypa.io/en/stable/news/#v23-1) which supports multiple `--config-settings` with the same key...
