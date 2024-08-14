@@ -144,7 +144,10 @@ class DebertaClassificationModel:
             # world_size = torch.distributed.get_world_size()
 
             model_with_config.cuda(gpu)
-            self.model = DDP(model_with_config, delay_all_reduce_named_params=True)
+            self.model = DDP(model_with_config,
+                             # delay_all_reduce_named_params=True,
+                             # param_to_hook_all_reduce=True
+                             )
         else:
             self.model = model_with_config
             self.model.to(config.train.gpu)
