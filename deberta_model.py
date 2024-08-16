@@ -2,7 +2,7 @@ import argparse
 import os
 
 import torch
-from apex import amp
+# from apex import amp
 from datasets import tqdm
 from kobert_tokenizer import KoBERTTokenizer
 from matplotlib import pyplot as plt
@@ -150,7 +150,7 @@ class DebertaClassificationModel:
         else:
             model_with_config.to(config.train.gpu)
 
-        model_with_config, self.optimizer = amp.initialize(model_with_config, self.optimizer, opt_level="O1")
+        # model_with_config, self.optimizer = amp.initialize(model_with_config, self.optimizer, opt_level="O1")
 
         if distributed:
             print(f'gpu: {gpu}')
@@ -225,8 +225,9 @@ class DebertaClassificationModel:
 
         # if torch.isnan(loss).any():
         #     raise Exception("loss has nan")
-        with amp.scale_loss(loss, self.optimizer) as scaled_loss:
-            scaled_loss.backward()
+        # with amp.scale_loss(loss, self.optimizer) as scaled_loss:
+        #     scaled_loss.backward()
+        loss.backward()
 
         self.optimizer.step()
 
