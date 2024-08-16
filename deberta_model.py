@@ -250,7 +250,7 @@ class DebertaClassificationModel:
         corrects = 0
         total = 0
         losses_sum = 0
-        for text, label in (pbar := tqdm(self.trainloader, ncols=100)):
+        for text, label in (pbar := tqdm(self.trainloader, ncols=75)):
             loss, correct, all = self.train_one(text, label)
             losses.append(loss)
             losses_sum += loss
