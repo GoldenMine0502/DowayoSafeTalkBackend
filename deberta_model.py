@@ -257,7 +257,7 @@ class DebertaClassificationModel:
 
             corrects += correct
             total += all
-            pbar.set_description(f"{round(corrects / total * 100, 2)}%, loss: {round(losses_sum / len(losses), 2)}")
+            pbar.set_description(f"{round(corrects / total * 100, 2)}%, loss: {round(losses_sum / len(losses), 4)}")
 
         train_accuracy = round(corrects / total * 100, 2)
 
