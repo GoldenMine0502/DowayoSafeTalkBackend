@@ -1,6 +1,8 @@
+import argparse
 import os
 
 import torch
+# from apex import amp
 from datasets import tqdm
 from kobert_tokenizer import KoBERTTokenizer
 from matplotlib import pyplot as plt
@@ -11,6 +13,7 @@ from transformers import AutoTokenizer, DebertaV2ForSequenceClassification, Debe
     DebertaForSequenceClassification, RobertaForSequenceClassification
 import torch.nn.functional as F
 from yamlload import Config
+from torch.nn.parallel import DistributedDataParallel as DDP
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -56,7 +59,7 @@ class TextLoader(Dataset):
 
 
 class DebertaClassificationModel:
-    def __init__(self, config, only_inference=False):
+    def __init__(self, config, only_inference=False, distributed=False, gpu=None):
         batch_size = config.train.batch_size
         num_workers = config.train.num_workers
 
@@ -124,7 +127,47 @@ class DebertaClassificationModel:
         # deberta_config.position_biased_input = False
 
         # model.config.max_position_embeddings = 768
-        self.model = RobertaForSequenceClassification(deberta_config)
+
+        # global args
+
+        # args.gpu = 0
+        # args.world_size = 1
+
+        # args.gpu = args.local_rank
+
+        model_with_config = RobertaForSequenceClassification(deberta_config)
+
+
+        # self.optimizer = create_xadam(self.model, config.train.epoch)
+        # self.optimizer = torch.optim.Adam(self.model.parameters(), lr=config.train.learning_rate)
+        self.optimizer = torch.optim.AdamW(model_with_config.parameters(), lr=config.train.learning_rate)
+        # torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
+
+        # self.pipe = pipeline(tokenizer=self.tokenizer, model=self.model, device=device)
+
+        if distributed:
+            model_with_config.cuda()
+        else:
+            model_with_config.to(config.train.gpu)
+
+        # model_with_config, self.optimizer = amp.initialize(model_with_config, self.optimizer, opt_level="O1")
+
+        if distributed:
+            print(f'gpu: {gpu}')
+            torch.cuda.set_device(gpu)
+            torch.distributed.init_process_group(backend='nccl',
+                                                 init_method='env://')
+            # world_size = torch.distributed.get_world_size()
+
+            model_with_config.cuda(gpu)
+            self.model = DDP(model_with_config,
+                             # delay_all_reduce_named_params=True,
+                             # param_to_hook_all_reduce=True
+                             )
+        else:
+            self.model = model_with_config
+            self.model.to(config.train.gpu)
+
 
         # self.multi_gpu = config.train.multi_gpu
 
@@ -134,16 +177,8 @@ class DebertaClassificationModel:
         # self.model.apply(self.weights_init)
 
         # self.criterion = nn.CrossEntropyLoss()
-        self.criterion = BalancedFocalLoss(alpha=torch.tensor([0.25, 0.75]).to(self.device), gamma=2.0, weight=torch.tensor([1.0, 3.0]).to(self.device))
+        self.criterion = BalancedFocalLoss(alpha=torch.tensor([0.35, 0.65]).to(self.device), gamma=2.0, weight=torch.tensor([1.0, 2.0]).to(self.device))
         self.softmax = nn.Softmax(dim=1)
-
-
-        # self.optimizer = create_xadam(self.model, config.train.epoch)
-        # self.optimizer = torch.optim.Adam(self.model.parameters(), lr=config.train.learning_rate)
-        self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=config.train.learning_rate)
-        # torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
-
-        # self.pipe = pipeline(tokenizer=self.tokenizer, model=self.model, device=device)
 
         self.train_accuracy = []
         self.validation_accuracy = []
@@ -190,8 +225,10 @@ class DebertaClassificationModel:
 
         # if torch.isnan(loss).any():
         #     raise Exception("loss has nan")
-
+        # with amp.scale_loss(loss, self.optimizer) as scaled_loss:
+        #     scaled_loss.backward()
         loss.backward()
+
         self.optimizer.step()
 
         return loss.item(), self.count_correct_prediction(output, labels), len(labels)
@@ -213,14 +250,14 @@ class DebertaClassificationModel:
         corrects = 0
         total = 0
         losses_sum = 0
-        for text, label in (pbar := tqdm(self.trainloader, ncols=100)):
+        for text, label in (pbar := tqdm(self.trainloader, ncols=75)):
             loss, correct, all = self.train_one(text, label)
             losses.append(loss)
             losses_sum += loss
 
             corrects += correct
             total += all
-            pbar.set_description(f"{round(corrects / total * 100, 2)}%, loss: {round(losses_sum / len(losses), 2)}")
+            pbar.set_description(f"{round(corrects / total * 100, 2)}%, loss: {round(losses_sum / len(losses), 4)}")
 
         train_accuracy = round(corrects / total * 100, 2)
 
@@ -371,11 +408,25 @@ class BalancedFocalLoss(nn.Module):
 if __name__ == "__main__":
     c = Config('config/config.yml')
 
-    trainer = DebertaClassificationModel(c)
+    parser = argparse.ArgumentParser()
+    # FOR DISTRIBUTED:  Parse for the local_rank argument, which will be supplied
+    # automatically by torch.distributed.launch.
+    parser.add_argument("--local-rank", default=os.getenv('LOCAL_RANK', 0), type=int)
+    args = parser.parse_args()
+
+
+    # args.local_rank = os.environ['LOCAL_RANK']
+    args.distributed = False
+    if 'WORLD_SIZE' in os.environ:
+        args.distributed = int(os.environ['WORLD_SIZE']) > 1
+
+    trainer = DebertaClassificationModel(
+        c,
+        distributed=args.distributed,
+        gpu=args.local_rank,
+    )
     trainer.process(
         epoch=c.train.epoch,
         start_epoch=c.train.start_epoch
     )
 
-# pip3 freeze > requirements.txt
-# pip install -r requirements.txt

@@ -52,7 +52,8 @@ class DataConverterSelectStar:
                     continue
 
                 text = spacing(text)
-                text = repeat_normalize(text, num_repeats=2)
+                text = repeat_normalize(text, num_repeats=3)
+                text = text.replace("#@이름#", "")
 
                 bad_content_sum = sum(map(lambda x: data[x], bad_content_keywords))
 
