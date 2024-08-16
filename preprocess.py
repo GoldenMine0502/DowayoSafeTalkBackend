@@ -22,6 +22,7 @@ class PreProcessKomoran:
             './dataset/data/korean_lgbt_result.txt',
             './dataset/data/korean_nirw_result.txt',
             './dataset/data/raw_korean_badword.txt',
+            './dataset/data/korean_dialect.txt',
         ]
 
         self.result_path = 'dataset/result.txt'
